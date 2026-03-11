@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import React from 'react';
+import { Stack } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
