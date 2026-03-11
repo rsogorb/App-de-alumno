@@ -3,9 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import {useStudent} from '../../src/hooks/useStudent'
 
 export default function HomeScreen() {
   const router = useRouter();
+  const {data: student, isLoading, isError} = useStudent("Z3948428T");
 
   const menuItems = [
     { id: 1, title: 'Mi Perfil', icon: 'person', color: '#007AFF', route: '/(tabs)/profile' },
@@ -22,7 +24,9 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
         <View style={styles.header}>
-          <Text style={styles.welcomeText}>¡Hola de nuevo!</Text>
+          <Text style={[styles.welcomeText, { textTransform: 'capitalize' }]}>
+            ¡Hola de nuevo,{student?.nombrePila?.toLowerCase() || 'Alumno'}!
+          </Text>
           <Text style={styles.subtitleText}>Panel del Alumno</Text>
         </View>
 
