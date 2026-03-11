@@ -1,13 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { SafeAreaFrameContext } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
   const router = useRouter();
 
-  // Configuración de los botones del menú
   const menuItems = [
     { id: 1, title: 'Mi Perfil', icon: 'person', color: '#007AFF', route: '/(tabs)/profile' },
     { id: 2, title: 'Horario', icon: 'calendar', color: '#5856D6', route: '/schedule' },
@@ -19,16 +18,14 @@ export default function HomeScreen() {
   ];
 
   return (
-    <SafeAreaFrameContext style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
-        {/* CABECERA DE BIENVENIDA */}
         <View style={styles.header}>
           <Text style={styles.welcomeText}>¡Hola de nuevo!</Text>
           <Text style={styles.subtitleText}>Panel del Alumno</Text>
         </View>
 
-        {/* CUADRÍCULA DE ACCESOS DIRECTOS */}
         <View style={styles.grid}>
           {menuItems.map((item) => (
             <TouchableOpacity 
@@ -44,14 +41,13 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {}
         <View style={styles.infoBox}>
           <Text style={styles.infoTitle}>Próxima Clase</Text>
           <Text style={styles.infoText}>Desarrollo de Interfaces - 10:00 AM</Text>
         </View>
 
       </ScrollView>
-    </SafeAreaFrameContext>
+    </SafeAreaView>
   );
 }
 
@@ -89,12 +85,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    // Sombra para iOS
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
   },
   iconContainer: {
     width: 60,
