@@ -1,16 +1,15 @@
-import axios from 'axios';
+import axios from "axios";
+
+const API_KEY = "0ef03c188374bc8";
+const API_SECRET = "7d4dd3caa0553ef";
 
 const client = axios.create({
-  baseURL: 'https://erppreprod.grupoatu.com',
+  baseURL: "https://erp.grupoatu.com",
   headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    Authorization: `token ${API_KEY}:${API_SECRET}`,
   },
 });
-
-const API_KEY = '53ebb6646f83156';
-const API_SECRET = 'c7479f00840588a';
-
-client.defaults.headers.common['Authorization'] = `token ${API_KEY}:${API_SECRET}`;
 
 export default client;
