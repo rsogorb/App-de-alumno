@@ -1,13 +1,11 @@
-// src/services/cursosServices.js
-// Ahora usa el cliente de axios configurado para conectarse a Frappe
-
-// Importamos el cliente que ya tiene las claves y la URL base
-import client from '../api/client';
+// Importamos los datos locales desde tu archivo de mocks
+import { mockCourses } from "../mocks/mocks";
 
 // --- FUNCIÓN PARA OBTENER TODOS LOS CURSOS ---
 export const getCursos = async () => {
-  console.log('Obteniendo cursos desde Frappe...');
+  console.log("Obteniendo cursos desde MOCK...");
   try {
+    /*
     // Construimos la URL con los parámetros directamente
     const url = '/api/resource/Curso?fields=["*"]&limit_page_length=1000';
     const response = await client.get(url);
@@ -41,23 +39,54 @@ export const getCursos = async () => {
     console.log(`Se obtuvieron ${cursosMapeados.length} cursos`);
     return cursosMapeados;
 
+
+    */
+    // Simulamos un pequeño retraso para que se vea el ActivityIndicator
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Mapeamos los datos para que coincidan con lo que espera CursosScreen (en inglés)
+    return mockCourses.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      duration: item.duration,
+      level: item.level,
+      image: item.image,
+      isEnrolled: false, // Por defecto en el catálogo general
+    }));
   } catch (error) {
-    console.error('Error detallado al obtener cursos:', error);
-    throw new Error('No se pudieron cargar los cursos desde el servidor');
+    console.error("Error al obtener cursos mock:", error);
+    throw new Error("No se pudieron cargar los cursos");
   }
 };
 
+// --- FUNCIÓN PARA OBTENER SOLO LOS CURSOS INSCRITOS ---
+/*
 // --- FUNCIÓN PARA OBTENER SOLO LOS CURSOS INSCRITOS (ejemplo) ---
 export const getMisCursos = async (userEmail) => {
   console.log('Obteniendo cursos inscritos (versión mock)...');
   const todosLosCursos = await getCursos();
   return todosLosCursos.filter(c => c.id === 2 || c.id === 4);
+*/
+export const getMisCursos = async (studentDni) => {
+  // En una app real, aquí filtrarías basándote en el perfil del estudiante
+  // Por ahora, devolvemos un array vacío o una lógica simple de mock
+  const todos = await getCursos();
+  return todos.slice(0, 1).map((c) => ({ ...c, isEnrolled: true }));
 };
 
-// --- FUNCIÓN PARA OBTENER CURSOS DISPONIBLES (NO INSCRITOS) ---
+/*
 export const getCursosDisponibles = async (userEmail) => {
   const todosLosCursos = await getCursos();
   const misCursos = await getMisCursos(userEmail);
   const misIds = new Set(misCursos.map(c => c.id));
   return todosLosCursos.filter(c => !misIds.has(c.id));
+*/
+// --- FUNCIÓN PARA OBTENER CURSOS DISPONIBLES (NO INSCRITOS) ---
+export const getCursosDisponibles = async (studentDni) => {
+  const todos = await getCursos();
+  const misCursos = await getMisCursos(studentDni);
+  const misIds = new Set(misCursos.map((c) => c.id));
+
+  return todos.filter((c) => !misIds.has(c.id));
 };

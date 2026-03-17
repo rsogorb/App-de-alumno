@@ -1,3 +1,223 @@
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { mockCourses, mockStudents } from "../mocks/mocks";
+
+const CursosScreen = () => {
+  const [allCourses, setAllCourses] = useState([]);
+  const [myCourses, setMyCourses] = useState([]);
+  const [filteredCourses, setFilteredCourses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentFilter, setCurrentFilter] = useState("all"); // 'all', 'available', 'enrolled'
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Lógica de Filtrado y Búsqueda combinada
+  useEffect(() => {
+    let result = [];
+
+    // 1. Filtrar por pestaña
+    if (currentFilter === "enrolled") {
+      result = myCourses;
+    } else if (currentFilter === "available") {
+      result = allCourses.filter((c) => !myCourses.some((m) => m.id === c.id));
+    } else {
+      result = allCourses;
+    }
+
+    // 2. Filtrar por texto de búsqueda
+    if (searchQuery.trim() !== "") {
+      const term = searchQuery.toLowerCase();
+      result = result.filter(
+        (course) =>
+          course.name.toLowerCase().includes(term) ||
+          course.description.toLowerCase().includes(term),
+      );
+    }
+
+    setFilteredCourses(result);
+  }, [currentFilter, searchQuery, allCourses, myCourses]);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      // Simulamos Mohammed (Z1368407G)
+      const user = mockStudents[0];
+
+      // Mapeamos los cursos inscritos del estudiante
+      const enrolled = user.enrollments.map((ins) => ({
+        id: ins.name, // O el ID real del curso si lo tuvieras
+        name: ins.course_name,
+        description: "Curso en el que estás inscrito actualmente.",
+        duration: "Ver detalle",
+        level: "Inscrito",
+        image: "https://via.placeholder.com/300x200?text=Mi+Curso",
+        isEnrolled: true,
+      }));
+
+      setMyCourses(enrolled);
+      setAllCourses(mockCourses);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const renderCourseCard = ({ item }) => (
+    <View style={styles.card}>
+      <Image source={{ uri: item.image }} style={styles.image} />
+      <View style={styles.infoContainer}>
+        <Text style={styles.courseName}>{item.name}</Text>
+        <Text style={styles.description} numberOfLines={2}>
+          {item.description}
+        </Text>
+        <View style={styles.tagContainer}>
+          <Text style={styles.tag}>⏱️ {item.duration}</Text>
+          <Text style={styles.tag}>📊 {item.level}</Text>
+        </View>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            item.isEnrolled ? styles.buttonEnrolled : styles.buttonAction,
+          ]}
+        >
+          <Text style={styles.buttonText}>
+            {item.isEnrolled ? "Acceder" : "Saber más"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  if (isLoading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#2469F5" />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Centro de Formación</Text>
+
+        <View style={styles.searchBox}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar cursos..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
+        <View style={styles.filterTabs}>
+          {["all", "available", "enrolled"].map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[styles.tab, currentFilter === tab && styles.activeTab]}
+              onPress={() => setCurrentFilter(tab)}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  currentFilter === tab && styles.activeTabText,
+                ]}
+              >
+                {tab === "all"
+                  ? "Todos"
+                  : tab === "available"
+                    ? "Disponibles"
+                    : "Mis Cursos"}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <FlatList
+        data={filteredCourses}
+        renderItem={renderCourseCard}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listPadding}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No se han encontrado cursos.</Text>
+        }
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#F8F9FA" },
+  header: {
+    backgroundColor: "white",
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEE",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 15,
+    color: "#1A1A1A",
+  },
+  searchBox: {
+    backgroundColor: "#F0F2F5",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+  },
+  searchInput: { height: 45, fontSize: 16 },
+  filterTabs: { flexDirection: "row", justifyContent: "space-between" },
+  tab: { paddingVertical: 8, paddingHorizontal: 15, borderRadius: 20 },
+  activeTab: { backgroundColor: "#2469F5" },
+  tabText: { color: "#666", fontWeight: "600" },
+  activeTabText: { color: "white" },
+  listPadding: { padding: 15 },
+  card: {
+    backgroundColor: "white",
+    borderRadius: 15,
+    marginBottom: 20,
+    elevation: 4,
+    overflow: "hidden",
+  },
+  image: { width: "100%", height: 160 },
+  infoContainer: { padding: 15 },
+  courseName: { fontSize: 18, fontWeight: "bold", marginBottom: 5 },
+  description: { color: "#666", fontSize: 14, marginBottom: 10 },
+  tagContainer: { flexDirection: "row", marginBottom: 15 },
+  tag: {
+    marginRight: 15,
+    fontSize: 12,
+    color: "#888",
+    backgroundColor: "#F0F2F5",
+    padding: 5,
+    borderRadius: 5,
+  },
+  button: { padding: 12, borderRadius: 10, alignItems: "center" },
+  buttonAction: { backgroundColor: "#2469F5" },
+  buttonEnrolled: { backgroundColor: "#34C759" },
+  buttonText: { color: "white", fontWeight: "bold" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  emptyText: { textAlign: "center", marginTop: 50, color: "#999" },
+});
+
+export default CursosScreen;
+
+/*
 // src/screens/CursosScreen.js
 import React, { useState, useEffect } from 'react';
 import {
@@ -103,7 +323,6 @@ const renderCurso = ({ item }) => (
 
   return (
     <View style={styles.container}>
-      {/* Botones de filtro */}
       <View style={styles.filtrosContainer}>
         <TouchableOpacity
           style={[styles.filtroBoton, filtro === 'todos' && styles.filtroActivo]}
@@ -131,7 +350,7 @@ const renderCurso = ({ item }) => (
         </TouchableOpacity>
       </View>
 
-      {/* Lista de cursos */}
+
       <FlatList
         data={cursosFiltrados()}
         renderItem={renderCurso}
@@ -276,3 +495,4 @@ const styles = StyleSheet.create({
 });
 
 export default CursosScreen;
+*/
