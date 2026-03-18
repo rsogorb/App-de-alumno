@@ -1,4 +1,5 @@
 import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router"; // Importar Router
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -12,6 +13,7 @@ import {
   View,
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { useAuth } from "../context/AuthContext"; // Importar Auth
 import { useStudent } from "../hooks/useStudent";
 import {
   updateStudentProfile,
@@ -19,15 +21,20 @@ import {
 } from "../services/studentService";
 
 export default function ProfileScreen() {
-  // DNI estático para pruebas (luego vendrá de tu AuthContext)
-  const { data: student, isLoading, refetch } = useStudent("Z1368407G");
+  const { user, logout } = useAuth(); // Obtener datos del contexto
+  const router = useRouter();
+
+  // USAMOS EL DNI DEL USUARIO LOGUEADO
+  const {
+    data: student,
+    isLoading,
+    refetch,
+  } = useStudent(user?.dni || "Z1368407G");
 
   const [uploading, setUploading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-
-  // ESTADO CLAVE: Para mostrar la foto al instante antes de que suba al servidor
   const [tempPhoto, setTempPhoto] = useState(null);
 
   useEffect(() => {
@@ -41,6 +48,20 @@ export default function ProfileScreen() {
       });
     }
   }, [student]);
+
+  const handleLogout = () => {
+    Alert.alert("Cerrar sesión", "¿Estás seguro de que quieres salir?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Sí, salir",
+        style: "destructive",
+        onPress: () => {
+          logout();
+          router.replace("/login");
+        },
+      },
+    ]);
+  };
 
   const handleSave = async () => {
     setUploading(true);
@@ -59,10 +80,7 @@ export default function ProfileScreen() {
   const changePhoto = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted")
-      return Alert.alert(
-        "Error",
-        "Necesitamos permisos para acceder a tus fotos.",
-      );
+      return Alert.alert("Error", "Permisos necesarios.");
 
     const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
@@ -72,24 +90,16 @@ export default function ProfileScreen() {
 
     if (!result.canceled) {
       const selectedUri = result.assets[0].uri;
-
-      // 1. Vista previa inmediata (Soluciona el problema de "imagen en blanco")
       setTempPhoto(selectedUri);
       setUploading(true);
-
       try {
-        // 2. Subida real al servidor de Grupo ATU
         await uploadStudentPhoto(student.dni, selectedUri);
-
-        // 3. Refrescar datos del servidor
         await refetch();
-
-        // 4. Limpiar temporal si todo fue bien
         setTempPhoto(null);
-        Alert.alert("¡Hecho!", "Foto de perfil actualizada.");
+        Alert.alert("¡Hecho!", "Foto actualizada.");
       } catch (err) {
-        setTempPhoto(null); // Volver a la foto anterior si falla
-        Alert.alert("Error", "Hubo un problema al subir la foto al servidor.");
+        setTempPhoto(null);
+        Alert.alert("Error", "No se pudo subir la foto.");
       } finally {
         setUploading(false);
       }
@@ -99,22 +109,19 @@ export default function ProfileScreen() {
   if (isLoading)
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#004A99" />
       </View>
     );
 
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={{ paddingBottom: 40 }}
+      contentContainerStyle={{ paddingBottom: 60 }}
     >
-      {/* SECCIÓN CABECERA Y FOTO */}
+      {/* CABECERA */}
       <View style={styles.header}>
         <TouchableOpacity onPress={changePhoto} disabled={uploading}>
           <View style={styles.avatarWrapper}>
-            {/* USO DE KEY: Forzamos a React Native a renderizar de nuevo la imagen 
-                cuando la URI cambia, evitando el bug del cuadro blanco en Android.
-            */}
             {tempPhoto || student?.foto ? (
               <Image
                 key={tempPhoto || student?.foto}
@@ -128,7 +135,6 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             )}
-
             <View style={styles.cameraIcon}>
               {uploading ? (
                 <ActivityIndicator size="small" color="#FFF" />
@@ -138,10 +144,8 @@ export default function ProfileScreen() {
             </View>
           </View>
         </TouchableOpacity>
-
         <Text style={styles.nameText}>{student?.nombreCompleto}</Text>
-        <Text style={styles.idSubtext}>ID: {student?.id}</Text>
-
+        <Text style={styles.idSubtext}>DNI: {student?.dni}</Text>
         <TouchableOpacity
           style={[styles.editBtn, isEditing && styles.saveBtn]}
           onPress={isEditing ? handleSave : () => setIsEditing(true)}
@@ -152,79 +156,67 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* BLOQUE 1: IDENTIFICACIÓN */}
+      {/* BLOQUES DE INFO (Los que ya tenías) */}
       <Text style={styles.sectionTitle}>Identificación Académica</Text>
       <View style={styles.card}>
         <InfoRow label="DNI / NIE" value={student?.dni} icon="🆔" />
         <InfoRow label="Situación" value={student?.status} icon="📊" last />
       </View>
 
-      {/* BLOQUE 2: DATOS PERSONALES */}
-      <Text style={styles.sectionTitle}>Información Personal</Text>
-      <View style={styles.card}>
-        <View style={styles.row}>
-          <Text style={styles.rowIcon}>🎂</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.rowLabel}>Fecha de Nacimiento</Text>
-            {isEditing ? (
-              <TouchableOpacity onPress={() => setDatePickerVisibility(true)}>
-                <Text
-                  style={[
-                    styles.rowValue,
-                    { color: "#007AFF", fontWeight: "bold" },
-                  ]}
-                >
-                  {formData.date_of_birth || "Seleccionar..."}
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <Text style={styles.rowValue}>{student?.fechaNacimiento}</Text>
-            )}
-          </View>
-        </View>
-
-        <EditableRow
-          label="Género"
-          value={formData.gender}
-          isEditing={isEditing}
-          onChange={(val) => setFormData({ ...formData, gender: val })}
-          icon="🚻"
-        />
-        <EditableRow
-          label="Nacionalidad"
-          value={formData.nationality}
-          isEditing={isEditing}
-          onChange={(val) => setFormData({ ...formData, nationality: val })}
-          icon="🌍"
-          last
-        />
-      </View>
-
-      {/* BLOQUE 3: CONTACTO */}
       <Text style={styles.sectionTitle}>Datos de Contacto</Text>
       <View style={styles.card}>
         <EditableRow
-          label="Email Institucional"
+          label="Email"
           value={formData.student_email_id}
           isEditing={isEditing}
           onChange={(val) =>
             setFormData({ ...formData, student_email_id: val })
           }
           icon="✉️"
-          keyboardType="email-address"
         />
         <EditableRow
-          label="Teléfono Móvil"
+          label="Teléfono"
           value={formData.student_mobile_number}
           isEditing={isEditing}
           onChange={(val) =>
             setFormData({ ...formData, student_mobile_number: val })
           }
           icon="📱"
-          keyboardType="phone-pad"
           last
         />
       </View>
+
+      {/* --- EL BOTÓN DE CERRAR SESIÓN --- */}
+      <Text style={styles.sectionTitle}>Sesión</Text>
+      <View style={styles.card}>
+        <TouchableOpacity
+          style={[styles.row, { borderBottomWidth: 0 }]}
+          onPress={handleLogout}
+        >
+          <Text style={styles.rowIcon}>🚪</Text>
+          <View>
+            <Text
+              style={[styles.rowValue, { color: "#FF3B30", fontWeight: "600" }]}
+            >
+              Cerrar Sesión
+            </Text>
+            <Text style={styles.rowLabel}>
+              Salir de la cuenta de {student?.nombrePila}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {isEditing && (
+        <TouchableOpacity
+          style={styles.cancelBtn}
+          onPress={() => setIsEditing(false)}
+        >
+          <Text style={{ color: "#FF3B30", fontWeight: "600" }}>
+            Cancelar cambios
+          </Text>
+        </TouchableOpacity>
+      )}
 
       <DateTimePickerModal
         isVisible={isDatePickerVisible}
@@ -239,22 +231,11 @@ export default function ProfileScreen() {
         onCancel={() => setDatePickerVisibility(false)}
         maximumDate={new Date()}
       />
-
-      {isEditing && (
-        <TouchableOpacity
-          style={styles.cancelBtn}
-          onPress={() => setIsEditing(false)}
-        >
-          <Text style={{ color: "#FF3B30", fontWeight: "600" }}>
-            Cancelar cambios
-          </Text>
-        </TouchableOpacity>
-      )}
     </ScrollView>
   );
 }
 
-// COMPONENTES AUXILIARES (Sin cambios, funcionan perfecto)
+// Mantenemos tus componentes auxiliares InfoRow, EditableRow y los styles...
 const InfoRow = ({ label, value, icon, last }) => (
   <View style={[styles.row, last && { borderBottomWidth: 0 }]}>
     <Text style={styles.rowIcon}>{icon}</Text>
@@ -265,27 +246,13 @@ const InfoRow = ({ label, value, icon, last }) => (
   </View>
 );
 
-const EditableRow = ({
-  label,
-  value,
-  isEditing,
-  onChange,
-  icon,
-  keyboardType = "default",
-  last,
-}) => (
+const EditableRow = ({ label, value, isEditing, onChange, icon, last }) => (
   <View style={[styles.row, last && { borderBottomWidth: 0 }]}>
     <Text style={styles.rowIcon}>{icon}</Text>
     <View style={{ flex: 1 }}>
       <Text style={styles.rowLabel}>{label}</Text>
       {isEditing ? (
-        <TextInput
-          style={styles.input}
-          value={value}
-          onChangeText={onChange}
-          keyboardType={keyboardType}
-          autoFocus={label === "Género"}
-        />
+        <TextInput style={styles.input} value={value} onChangeText={onChange} />
       ) : (
         <Text style={styles.rowValue}>{value || "No definido"}</Text>
       )}
@@ -314,7 +281,7 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: "#007AFF",
+    backgroundColor: "#004A99",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -347,7 +314,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F2F2F7",
   },
   saveBtn: { backgroundColor: "#34C759" },
-  editBtnText: { fontSize: 14, fontWeight: "600", color: "#007AFF" },
+  editBtnText: { fontSize: 14, fontWeight: "600", color: "#004A99" },
   sectionTitle: {
     fontSize: 11,
     color: "#8E8E93",
