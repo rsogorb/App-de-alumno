@@ -16,12 +16,12 @@ import { mockStudents } from "../src/mocks/mocks";
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth(); // Extraemos la función del contexto
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const USUARIO_TEST = "alumno@atu.com";
     const PASS_TEST = "1234";
 
@@ -29,7 +29,7 @@ export default function LoginScreen() {
       const studentData = mockStudents.find((s) => s.dni === "Z1368407G");
 
       if (studentData) {
-        login(studentData);
+        await login(studentData);
 
         console.log("¡Acceso concedido para:", studentData.first_name);
 
