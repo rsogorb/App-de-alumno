@@ -14,7 +14,7 @@ export const mockStudents = [
     image_url: "https://randomuser.me/api/portraits/men/32.jpg", // Foto de prueba
     enrollments: [
       {
-        name: "INS-001",
+        name: "C001",
         course_name: "Excel Avanzado para Finanzas",
         status: "En curso",
       },

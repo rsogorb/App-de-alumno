@@ -9,7 +9,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { mockCourses, mockStudents } from "../mocks/mocks";
+import { mockStudents } from "../mocks/mocks";
+import { getCursos } from "../services/cursosServices";
 
 const CursosScreen = () => {
   const [allCourses, setAllCourses] = useState([]);
@@ -52,22 +53,15 @@ const CursosScreen = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Simulamos Mohammed (Z1368407G)
-      const user = mockStudents[0];
+      const cursosApp = await getCursos(); // Esto ya viene mapeado del servicio
+      setAllCourses(cursosApp);
 
-      // Mapeamos los cursos inscritos del estudiante
-      const enrolled = user.enrollments.map((ins) => ({
-        id: ins.name, // O el ID real del curso si lo tuvieras
-        name: ins.course_name,
-        description: "Curso en el que estás inscrito actualmente.",
-        duration: "Ver detalle",
-        level: "Inscrito",
-        image: "https://via.placeholder.com/300x200?text=Mi+Curso",
+      // Para los inscritos, usa el ID correcto
+      const enrolled = mockStudents[0].enrollments.map((ins) => ({
+        ...cursosApp.find((c) => c.id === ins.course_id), // Buscamos el objeto curso completo
         isEnrolled: true,
       }));
-
       setMyCourses(enrolled);
-      setAllCourses(mockCourses);
     } catch (error) {
       console.error(error);
     } finally {
