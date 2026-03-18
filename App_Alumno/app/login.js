@@ -1,37 +1,56 @@
-import React, { useState } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
-  KeyboardAvoidingView, 
-  Platform, 
-  Image 
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useAuth } from "../src/context/AuthContext";
+import { mockStudents } from "../src/mocks/mocks";
 
 export default function LoginScreen() {
-    const router = useRouter();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+  const router = useRouter();
+  const { login } = useAuth(); // Extraemos la función del contexto
 
-    const handleLogin = () => {
-        const USUARIO_TEST = 'alumno@atu.com';
-        const PASS_TEST = '1234';
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-        if (email === USUARIO_TEST && password === PASS_TEST) {
-            console.log('¡Acceso concedido!');
-            router.replace('/(tabs)'); 
-        } else {
-            alert('Usuario o contraseña incorrectos. \n\nPrueba con:\nalumno@atu.com / 1234');
-        }
-     };
+  const handleLogin = () => {
+    const USUARIO_TEST = "alumno@atu.com";
+    const PASS_TEST = "1234";
 
-    return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    if (email.toLowerCase() === USUARIO_TEST && password === PASS_TEST) {
+      const studentData = mockStudents.find((s) => s.dni === "Z1368407G");
+
+      if (studentData) {
+        login(studentData);
+
+        console.log("¡Acceso concedido para:", studentData.first_name);
+
+        router.replace("/(tabs)");
+      } else {
+        Alert.alert(
+          "Error",
+          "No se encontraron datos para este alumno en los mocks.",
+        );
+      }
+    } else {
+      Alert.alert(
+        "Acceso Denegado",
+        "Usuario o contraseña incorrectos.\n\nPrueba con:\nalumno@atu.com / 1234",
+      );
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
       <View style={styles.inner}>
@@ -45,7 +64,12 @@ export default function LoginScreen() {
         {/* FORMULARIO */}
         <View style={styles.form}>
           <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
+            <Ionicons
+              name="mail-outline"
+              size={20}
+              color="#666"
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="Correo electrónico"
@@ -57,7 +81,12 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+            <Ionicons
+              name="lock-closed-outline"
+              size={20}
+              color="#666"
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="Contraseña"
@@ -71,9 +100,10 @@ export default function LoginScreen() {
             <Text style={styles.buttonText}>Entrar</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push('/register')}>
+          <TouchableOpacity onPress={() => router.push("/register")}>
             <Text style={styles.registerText}>
-              ¿No tienes cuenta? <Text style={styles.registerLink}>Regístrate</Text>
+              ¿No tienes cuenta?{" "}
+              <Text style={styles.registerLink}>Regístrate</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -85,40 +115,40 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: "#F2F2F7",
   },
   inner: {
     padding: 24,
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   logoContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 48,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1C1C1E',
+    fontWeight: "bold",
+    color: "#1C1C1E",
     marginTop: 10,
   },
   subtitle: {
     fontSize: 16,
-    color: '#004A99',
-    fontWeight: '600',
+    color: "#004A99",
+    fontWeight: "600",
   },
   form: {
-    width: '100%',
+    width: "100%",
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF",
     borderRadius: 12,
     marginBottom: 16,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: "#E5E5EA",
   },
   inputIcon: {
     marginRight: 10,
@@ -129,31 +159,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#004A99',
+    backgroundColor: "#004A99",
     borderRadius: 12,
     height: 55,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 10,
     marginBottom: 20,
-    shadowColor: '#004A99',
+    shadowColor: "#004A99",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 5,
   },
   buttonText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   registerText: {
-    textAlign: 'center',
-    color: '#8E8E93',
+    textAlign: "center",
+    color: "#8E8E93",
     fontSize: 14,
   },
   registerLink: {
-    color: '#004A99',
-    fontWeight: 'bold',
+    color: "#004A99",
+    fontWeight: "bold",
   },
 });

@@ -1,7 +1,8 @@
-import React from 'react';
-import { Stack } from 'expo-router';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Stack } from "expo-router";
+import React from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { AuthProvider } from "../src/context/AuthContext";
 
 // Creamos el cliente de React Query
 const queryClient = new QueryClient();
@@ -10,12 +11,13 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <Stack screenOptions={{ headerShown: false }}>
-          {}
-          <Stack.Screen name="login" options={{ title: 'Iniciar Sesión' }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="register" options={{ title: 'Registro', headerShown: true }} />
-        </Stack>
+        <AuthProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="login" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="register" options={{ headerShown: true }} />
+          </Stack>
+        </AuthProvider>
       </QueryClientProvider>
     </SafeAreaProvider>
   );

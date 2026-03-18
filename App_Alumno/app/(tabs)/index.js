@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,11 +9,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../src/context/AuthContext";
 import { useStudent } from "../../src/hooks/useStudent";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { data: student, isLoading, isError } = useStudent("Z1368407G");
+  const { user } = useAuth();
+  const { data: student, isLoading, isError } = useStudent(user?.dni);
 
   const menuItems = [
     {
@@ -66,14 +69,28 @@ export default function HomeScreen() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <ActivityIndicator size="large" color="#004A99" />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={[styles.welcomeText, { textTransform: "capitalize" }]}>
-            ¡Hola de nuevo, {student?.nombrePila?.toLowerCase() || "Alumno"}!
+          <Text style={styles.welcomeText}>
+            ¡Hola de nuevo,{" "}
+            {
+              (student?.nombrePila || user?.first_name || "Alumno")
+                .toLowerCase()
+                .replace(/^\w/, (c) => c.toUpperCase()) // Esto solo capitaliza la PRIMERA letra de todo el nombre
+            }
+            !
           </Text>
-          <Text style={styles.subtitleText}>Panel del Alumno</Text>
+          <Text style={styles.subtitleText}>Panel del Alumno - Grupo ATU</Text>
         </View>
 
         <View style={styles.grid}>
@@ -94,9 +111,11 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.infoBox}>
-          <Text style={styles.infoTitle}>Próxima Clase</Text>
+          <Text style={styles.infoTitle}>Estado de cuenta</Text>
           <Text style={styles.infoText}>
-            Desarrollo de Interfaces - 10:00 AM
+            {student?.enrollments?.length > 0
+              ? `Tienes ${student.enrollments.length} curso(s) activo(s)`
+              : "No tienes cursos activos actualmente"}
           </Text>
         </View>
       </ScrollView>
@@ -117,7 +136,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   welcomeText: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "bold",
     color: "#1C1C1E",
   },
