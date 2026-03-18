@@ -1,23 +1,41 @@
-import { createContext, useContext, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createContext, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const login = (userData) => {
+  useEffect(() => {
+    const loadStorageData = async () => {
+      try {
+        const authDataSerialized = await AsyncStorage.getItem("@AuthData");
+        if (authDataSerialized) {
+          const _user = JSON.parse(authDataSerialized);
+          setUser(_user);
+        }
+      } catch (error) {
+        console.error("Error cargando la sesión: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadStorageData();
+  }, []);
+
+  const login = async (userData) => {
     setUser(userData);
-    setIsAuthenticated(true);
+    await AsyncStorage.setItem("@AuthData", JSON.stringify(userData));
   };
 
-  const logout = () => {
+  const logout = async () => {
     setUser(null);
-    setIsAuthenticated(false);
+    await AsyncStorage.removeItem("@AuthData");
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

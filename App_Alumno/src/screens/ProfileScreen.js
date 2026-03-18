@@ -21,7 +21,7 @@ import {
 } from "../services/studentService";
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth(); // Obtener datos del contexto
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   // USAMOS EL DNI DEL USUARIO LOGUEADO
