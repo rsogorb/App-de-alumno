@@ -47,6 +47,7 @@ function RootLayoutNav() {
         name="register"
         options={{ headerShown: true, title: "Registro" }}
       />
+      <Stack.Screen name="course-detail" options={{ title: "Detalle del Curso" }} />
     </Stack>
   );
 }
