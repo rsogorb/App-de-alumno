@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import {
   ActivityIndicator,
   FlatList,
@@ -19,6 +21,7 @@ const CursosScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentFilter, setCurrentFilter] = useState("all"); // 'all', 'available', 'enrolled'
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     loadData();
@@ -58,7 +61,7 @@ const CursosScreen = () => {
 
       // Para los inscritos, usa el ID correcto
       const enrolled = mockStudents[0].enrollments.map((ins) => ({
-        ...cursosApp.find((c) => c.id === ins.course_id), // Buscamos el objeto curso completo
+        ...cursosApp.find((c) => c.id === ins.name), // Buscamos el objeto curso completo
         isEnrolled: true,
       }));
       setMyCourses(enrolled);
@@ -86,6 +89,18 @@ const CursosScreen = () => {
             styles.button,
             item.isEnrolled ? styles.buttonEnrolled : styles.buttonAction,
           ]}
+          onPress={() => router.push({
+            pathname: '/course-detail',
+            params: { 
+              courseId: item.id,
+              courseName: item.name,
+              courseDescription: item.description,
+              courseDuration: item.duration,
+              courseLevel: item.level,
+              courseImage: item.image,
+              isEnrolled: item.isEnrolled ? 'true' : 'false'
+            }
+          })}
         >
           <Text style={styles.buttonText}>
             {item.isEnrolled ? "Acceder" : "Saber más"}
