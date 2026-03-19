@@ -1,6 +1,7 @@
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router"; // Importar Router
 import React, { useEffect, useState } from "react";
+import { mockStudents, mockCourses } from '../mocks/mocks';
 import {
   ActivityIndicator,
   Alert,
@@ -186,6 +187,59 @@ export default function ProfileScreen() {
         />
       </View>
 
+            {/* SECCIÓN: MIS CURSOS (NUEVA) */}
+            {/* SECCIÓN: MIS CURSOS (NUEVA) - VERSIÓN CORREGIDA */}
+      <Text style={styles.sectionTitle}>Mis Cursos</Text>
+      <View style={styles.card}>
+        {/* Usamos directamente los enrollments del mock si existen */}
+        {mockStudents.find(s => s.dni === student?.dni)?.enrollments?.length > 0 ? (
+          mockStudents
+            .find(s => s.dni === student?.dni)
+            .enrollments.map((enrollment, index) => {
+              const curso = mockCourses.find(c => c.id === enrollment.name);
+              return (
+                <TouchableOpacity
+                  key={enrollment.name}
+                  style={[styles.courseRow, index === student.enrollments.length - 1 && { borderBottomWidth: 0 }]}
+                  onPress={() => {
+                    if (curso) {
+                      router.push({
+                        pathname: '/course-detail',
+                        params: {
+                          courseId: curso.id,
+                          courseName: curso.name,
+                          courseDescription: curso.description,
+                          courseDuration: curso.duration,
+                          courseLevel: curso.level,
+                          courseImage: curso.image,
+                          isEnrolled: 'true'
+                        }
+                      });
+                    }
+                  }}
+                >
+                  <View style={styles.courseIcon}>
+                    <Text>📘</Text>
+                  </View>
+                  <View style={styles.courseInfo}>
+                    <Text style={styles.courseName}>{enrollment.course_name}</Text>
+                    <Text style={styles.courseStatus}>
+                      Estado: {enrollment.status || "En curso"}
+                    </Text>
+                  </View>
+                  <Text style={styles.courseArrow}>›</Text>
+                </TouchableOpacity>
+              );
+            })
+        ) : (
+          <View style={styles.emptyCourses}>
+            <Text style={styles.emptyCoursesText}>
+              No estás inscrito en ningún curso actualmente.
+            </Text>
+          </View>
+        )}
+      </View>
+
       {/* --- EL BOTÓN DE CERRAR SESIÓN --- */}
       <Text style={styles.sectionTitle}>Sesión</Text>
       <View style={styles.card}>
@@ -351,6 +405,49 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#007AFF",
     paddingVertical: 2,
+  },
+  courseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F2F7',
+  },
+  courseIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F0F2F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  courseInfo: {
+    flex: 1,
+  },
+  courseName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginBottom: 2,
+  },
+  courseStatus: {
+    fontSize: 12,
+    color: '#8E8E93',
+  },
+  courseArrow: {
+    fontSize: 18,
+    color: '#8E8E93',
+    marginLeft: 8,
+  },
+  emptyCourses: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  emptyCoursesText: {
+    fontSize: 14,
+    color: '#8E8E93',
+    textAlign: 'center',
   },
   cancelBtn: { marginTop: 20, marginBottom: 20, alignItems: "center" },
 });
