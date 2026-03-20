@@ -52,6 +52,8 @@ export const getCursos = async () => {
       duration: item.duration,
       level: item.level,
       image: item.image,
+      city: item.city || "Online",
+      durationHours: item.durationHours || 0,
       isEnrolled: false, // Por defecto en el catálogo general
     }));
   } catch (error) {
