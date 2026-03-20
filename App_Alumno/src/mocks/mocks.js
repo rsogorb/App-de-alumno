@@ -46,6 +46,8 @@ export const mockCourses = [
     duration: "40 horas",
     level: "Avanzado",
     image: "https://via.placeholder.com/300x200?text=Excel",
+    city: "Almería",
+    durationHours: 40,
   },
   {
     id: "C002",
@@ -54,6 +56,8 @@ export const mockCourses = [
     duration: "60 horas",
     level: "Intermedio",
     image: "https://via.placeholder.com/300x200?text=Marketing",
+    city: "Madrid",
+    durationHours: 60,
   },
   {
     id: "C003",
@@ -62,5 +66,7 @@ export const mockCourses = [
     duration: "120 horas",
     level: "Experto",
     image: "https://via.placeholder.com/300x200?text=React+Native",
+    city: "Barcelona",
+    durationHours: 120,
   },
 ];
