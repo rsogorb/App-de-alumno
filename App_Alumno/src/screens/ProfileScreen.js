@@ -1,4 +1,5 @@
 import * as ImagePicker from "expo-image-picker";
+import SkeletonProfile from '../components/SkeletonProfile';
 import { useFocusEffect, useRouter } from "expo-router"; // Importar Router
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -114,12 +115,9 @@ export default function ProfileScreen() {
     }
   };
 
-  if (isLoading)
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#004A99" />
-      </View>
-    );
+  if (isLoading) {
+    return <SkeletonProfile />;
+  }
 
   return (
     <ScrollView

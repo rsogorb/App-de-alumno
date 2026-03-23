@@ -16,7 +16,7 @@ export const getStudentProfile = async (dni) => {
     if (USE_MOCK) {
       const cleanDni = dni.trim().toUpperCase();
       // Simular carga
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       // Buscamos en el almacenamiento persistente (AsyncStorage)
       const studentData = await getStoredStudent(cleanDni);

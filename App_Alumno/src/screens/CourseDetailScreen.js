@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { enrollInCourse, unenrollFromCourse } from "../services/studentService";
+import { sendLocalNotification } from "../services/notificationService"; // ← NUEVA IMPORTACIÓN
 
 const CourseDetailScreen = () => {
   const router = useRouter();
@@ -50,7 +51,15 @@ const CourseDetailScreen = () => {
               style: "destructive",
               onPress: async () => {
                 const success = await unenrollFromCourse(user.dni, courseId);
-                if (success) setIsEnrolled(false);
+                if (success) {
+                  setIsEnrolled(false);
+                  // NOTIFICACIÓN AL DARSE DE BAJA
+                  await sendLocalNotification(
+                    'Baja confirmada',
+                    `Te has dado de baja de ${courseName}. ¡Esperamos verte de nuevo!`,
+                    { courseId }
+                  );
+                }
               },
             },
           ],
@@ -62,6 +71,12 @@ const CourseDetailScreen = () => {
         });
         if (success) {
           setIsEnrolled(true);
+          // NOTIFICACIÓN AL INSCRIBIRSE
+          await sendLocalNotification(
+            '¡Inscripción exitosa!',
+            `Te has inscrito en ${courseName}. ¡Aprovecha al máximo tu curso!`,
+            { courseId }
+          );
           Alert.alert("¡Hecho!", "Te has inscrito correctamente.");
         }
       }

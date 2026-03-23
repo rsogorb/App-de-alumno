@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import React, { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Platform, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
+import { setupNotificationChannel, requestPermissions } from "../src/services/notificationService";
 
 const queryClient = new QueryClient();
 
@@ -11,6 +12,17 @@ function RootLayoutNav() {
   const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  // Configurar notificaciones al iniciar
+  useEffect(() => {
+    const setupNotifications = async () => {
+      if (Platform.OS === 'android') {
+        await setupNotificationChannel();
+      }
+      await requestPermissions();
+    };
+    setupNotifications();
+  }, []);
 
   useEffect(() => {
     if (loading) return;

@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import SkeletonCourseCard from '../components/SkeletonCourseCard';
 import { useFocusEffect, useRouter } from "expo-router"; // Corregido: useFocusEffect
 import { useCallback, useEffect, useState } from "react"; // Corregido: useCallback
 import {
@@ -189,8 +190,24 @@ const CursosScreen = () => {
 
   if (isLoading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2469F5" />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Centro de Formación</Text>
+          <View style={styles.searchRow}>
+            <View style={styles.searchSkeleton} />
+            <View style={styles.filterButtonSkeleton} />
+          </View>
+          <View style={styles.filterTabsSkeleton}>
+            <View style={styles.tabSkeleton} />
+            <View style={styles.tabSkeleton} />
+            <View style={styles.tabSkeleton} />
+          </View>
+        </View>
+        <View style={styles.listPadding}>
+          {[1, 2, 3].map((_, index) => (
+            <SkeletonCourseCard key={index} />
+          ))}
+        </View>
       </View>
     );
   }
@@ -458,6 +475,31 @@ const styles = StyleSheet.create({
   applyButtonText: {
     color: "white",
     fontWeight: "600",
+  },
+   // Estilos para skeletons
+  searchSkeleton: {
+    flex: 1,
+    height: 45,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 10,
+  },
+  filterButtonSkeleton: {
+    width: 45,
+    height: 45,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 10,
+  },
+  filterTabsSkeleton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 15,
+  },
+  tabSkeleton: {
+    flex: 1,
+    height: 36,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 20,
+    marginHorizontal: 5,
   },
 });
 
