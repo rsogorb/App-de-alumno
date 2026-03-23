@@ -1,4 +1,6 @@
-import { mockStudents } from "../mocks/mocks";
+import { getStoredStudent, saveStudentUpdate } from "../utils/storage";
+
+const USE_MOCK = true;
 
 /**
  * Obtiene el perfil del estudiante desde los Mocks locales
@@ -11,32 +13,19 @@ export const getStudentProfile = async (dni) => {
     const data = res.data.data
     */
 
-    // 1. Limpiamos el DNI recibido para evitar errores de formato
-    const cleanDni = dni.trim().toUpperCase();
-    console.log("--- Buscando en Mock con DNI:", cleanDni);
+    if (USE_MOCK) {
+      const cleanDni = dni.trim().toUpperCase();
+      // Simular carga
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // Simulamos latencia de red (500ms)
-    await new Promise((resolve) => setTimeout(resolve, 500));
+      // Buscamos en el almacenamiento persistente (AsyncStorage)
+      const studentData = await getStoredStudent(cleanDni);
 
-    // 2. Buscamos al estudiante en el array de mocks
-    const studentData = mockStudents.find(
-      (s) =>
-        s.dni.trim().toUpperCase() === cleanDni ||
-        s.name.trim().toUpperCase() === cleanDni,
-    );
+      if (!studentData) return null;
 
-    // Si no existe, lanzamos error en consola y devolvemos null
-    if (!studentData) {
-      console.error(
-        `Estudiante ${cleanDni} no encontrado. Disponibles:`,
-        mockStudents.map((s) => s.dni),
-      );
-      return null;
-    }
-
-    // 3. Retornamos el objeto mapeado exactamente como lo pide ProfileScreen.js
-    return {
-      /*
+      // 3. Retornamos el objeto mapeado exactamente como lo pide ProfileScreen.js
+      return {
+        /*
       id: data.name,
       nombrePila: data.first_name,
       nombreCompleto: data.student_name,
@@ -54,19 +43,23 @@ export const getStudentProfile = async (dni) => {
       situacion: data.custom_situation,
       foto: data.image ? `https://erppreprod.grupoatu.com${data.image}` : null,
       */
-      id: studentData.name,
-      dni: studentData.dni,
-      nombrePila: studentData.first_name,
-      nombreCompleto: `${studentData.first_name} ${studentData.last_name}`,
-      correoElectronico: studentData.student_email_id,
-      telefono: studentData.student_mobile_number || "No disponible",
-      genero: studentData.gender || "No definido",
-      nacionalidad: studentData.nationality || "Española",
-      fechaNacimiento: studentData.date_of_birth || "No disponible",
-      status: studentData.enabled === 1 ? "Activo" : "Inactivo",
-      foto: studentData.image_url || null,
-      enrollments: studentData.enrollments || [], // Útil para CursosScreen
-    };
+        id: studentData.name,
+        dni: studentData.dni,
+        nombrePila: studentData.first_name,
+        nombreCompleto: `${studentData.first_name} ${studentData.last_name}`,
+        correoElectronico: studentData.student_email_id,
+        telefono: studentData.student_mobile_number || "No disponible",
+        genero: studentData.gender || "No definido",
+        nacionalidad: studentData.nationality || "Española",
+        fechaNacimiento: studentData.date_of_birth || "No disponible",
+        status: studentData.enabled === 1 ? "Activo" : "Inactivo",
+        foto: studentData.image_url || null,
+        enrollments: studentData.enrollments || [], // Útil para CursosScreen
+      };
+    } else {
+      console.warn("La API real no está configurada aún.");
+      return null;
+    }
   } catch (error) {
     /*
     console.error("Error real cargando alumno:", error.response?.status);
@@ -81,8 +74,16 @@ export const getStudentProfile = async (dni) => {
  * Simulación de actualización de perfil
  */
 export const updateStudentProfile = async (dni, formData) => {
-  console.log("--- MOCK: Simulando guardado en servidor para", dni, formData);
-  return new Promise((resolve) => setTimeout(resolve, 1000));
+  if (USE_MOCK) {
+    const mappedData = {
+      student_mobile_number: formData.student_mobile_number,
+      gender: formData.gender,
+      nationality: formData.nationality,
+      date_of_birth: formData.date_of_birth,
+      student_email_id: formData.student_email_id,
+    };
+    return await saveStudentUpdate(dni, mappedData);
+  }
 };
 
 /**
@@ -96,6 +97,69 @@ export const uploadStudentPhoto = async (dni, imageUri) => {
     imageUri,
   );
   return new Promise((resolve) => setTimeout(resolve, 1500));
+};
+
+export const enrollInCourse = async (dni, course) => {
+  if (USE_MOCK) {
+    try {
+      // 1. Obtenemos los datos actuales del disco
+      const student = await getStoredStudent(dni);
+      if (!student) return false;
+
+      // 2. Comprobamos si ya está inscrito para no duplicar
+      const isAlreadyEnrolled = student.enrollments?.some(
+        (e) => e.name === course.id,
+      );
+      if (isAlreadyEnrolled) return true;
+
+      // 3. Creamos el nuevo objeto de inscripción (formato Frappe/Mock)
+      const newEnrollment = {
+        name: course.id,
+        course_name: course.name,
+        status: "En curso",
+        creation: new Date().toISOString().split("T")[0],
+      };
+
+      // 4. Actualizamos el array de inscripciones
+      const updatedEnrollments = [
+        ...(student.enrollments || []),
+        newEnrollment,
+      ];
+
+      // 5. Guardamos en AsyncStorage usando la función que ya teníamos
+      await saveStudentUpdate(dni, { enrollments: updatedEnrollments });
+
+      console.log(`--- MOCK: Alumno ${dni} inscrito en ${course.name} ---`);
+      return true;
+    } catch (error) {
+      console.error("Error en inscripción mock:", error);
+      return false;
+    }
+  }
+};
+
+export const unenrollFromCourse = async (dni, courseId) => {
+  if (USE_MOCK) {
+    try {
+      const student = await getStoredStudent(dni);
+      if (!student) return false;
+
+      // Filtramos: nos quedamos con todos MENOS con el que queremos borrar
+      const updatedEnrollments = (student.enrollments || []).filter(
+        (e) => String(e.name) !== String(courseId),
+      );
+
+      // Guardamos el nuevo array en AsyncStorage
+      await saveStudentUpdate(dni, { enrollments: updatedEnrollments });
+
+      console.log(`--- MOCK: Alumno ${dni} dado de baja de ${courseId} ---`);
+      return true;
+    } catch (error) {
+      console.error("Error al desapuntar en mock:", error);
+      return false;
+    }
+  }
+  return false;
 };
 //Lógida de foto con API
 /*

@@ -1,11 +1,11 @@
 // Importamos los datos locales desde tu archivo de mocks
 import { mockCourses } from "../mocks/mocks";
 
+const USE_MOCK = true;
+
 // --- FUNCIÓN PARA OBTENER TODOS LOS CURSOS ---
 export const getCursos = async () => {
-  console.log("Obteniendo cursos desde MOCK...");
-  try {
-    /*
+  /*
     // Construimos la URL con los parámetros directamente
     const url = '/api/resource/Curso?fields=["*"]&limit_page_length=1000';
     const response = await client.get(url);
@@ -37,28 +37,24 @@ export const getCursos = async () => {
     });
 
     console.log(`Se obtuvieron ${cursosMapeados.length} cursos`);
-    return cursosMapeados;
+    return cursosMapeados; */
 
-
-    */
-    // Simulamos un pequeño retraso para que se vea el ActivityIndicator
+  if (USE_MOCK) {
+    console.log("Obteniendo cursos desde MOCK...");
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // Mapeamos los datos para que coincidan con lo que espera CursosScreen (en inglés)
+    // IMPORTANTE: Devolvemos los campos que tu CursosScreen necesita para filtrar
     return mockCourses.map((item) => ({
       id: item.id,
       name: item.name,
       description: item.description,
       duration: item.duration,
+      durationHours: item.durationHours || 0, // Para el filtro de <50h, >100h
       level: item.level,
+      city: item.city || "Almería", // Para el filtro de ciudad
       image: item.image,
-      city: item.city || "Online",
-      durationHours: item.durationHours || 0,
-      isEnrolled: false, // Por defecto en el catálogo general
+      isEnrolled: false,
     }));
-  } catch (error) {
-    console.error("Error al obtener cursos mock:", error);
-    throw new Error("No se pudieron cargar los cursos");
   }
 };
 

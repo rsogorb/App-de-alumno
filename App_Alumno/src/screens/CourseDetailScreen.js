@@ -1,180 +1,270 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
-import React from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
+import { useAuth } from "../context/AuthContext";
+import { enrollInCourse, unenrollFromCourse } from "../services/studentService";
 
 const CourseDetailScreen = () => {
-  // Recibimos los parámetros individuales
-  const params = useLocalSearchParams();
-  
-  // Construimos el objeto course a partir de los parámetros
-  const courseData = {
-    id: params.courseId,
-    name: params.courseName,
-    description: params.courseDescription,
-    duration: params.courseDuration,
-    level: params.courseLevel,
-    image: params.courseImage,
-    isEnrolled: params.isEnrolled === 'true',
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const {
+    courseId,
+    courseName,
+    courseDescription,
+    courseDuration,
+    courseLevel,
+    courseImage,
+    isEnrolled: initialIsEnrolled,
+  } = useLocalSearchParams();
+
+  const [isEnrolled, setIsEnrolled] = useState(initialIsEnrolled === "true");
+  const [loading, setLoading] = useState(false);
+
+  const handleEnrollmentToggle = async () => {
+    if (!user?.dni) {
+      Alert.alert("Identificación", "Inicia sesión para gestionar tus cursos.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (isEnrolled) {
+        Alert.alert(
+          "Anular inscripción",
+          "¿Deseas darte de baja de este curso?",
+          [
+            { text: "Cancelar", style: "cancel" },
+            {
+              text: "Confirmar Baja",
+              style: "destructive",
+              onPress: async () => {
+                const success = await unenrollFromCourse(user.dni, courseId);
+                if (success) setIsEnrolled(false);
+              },
+            },
+          ],
+        );
+      } else {
+        const success = await enrollInCourse(user.dni, {
+          id: courseId,
+          name: courseName,
+        });
+        if (success) {
+          setIsEnrolled(true);
+          Alert.alert("¡Hecho!", "Te has inscrito correctamente.");
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Datos de ejemplo para el temario
-  const syllabus = [
-    "Introducción y conceptos básicos",
-    "Módulo 1: Fundamentos",
-    "Módulo 2: Desarrollo práctico",
-    "Módulo 3: Casos de estudio",
-    "Evaluación final",
-  ];
-
-  const requirements = [
-    "Conocimientos básicos de informática",
-    "Ganas de aprender",
-    "Conexión a internet",
-  ];
-
   return (
-    <ScrollView style={styles.container}>
-      {/* Imagen del curso */}
-      <Image source={{ uri: courseData.image }} style={styles.image} />
-
-      {/* Contenido */}
-      <View style={styles.content}>
-        {/* Título y descripción */}
-        <Text style={styles.title}>{courseData.name}</Text>
-        <Text style={styles.description}>{courseData.description}</Text>
-
-        {/* Etiquetas de duración y nivel */}
-        <View style={styles.tagsContainer}>
-          <View style={styles.tag}>
-            <Ionicons name="time-outline" size={16} color="#666" />
-            <Text style={styles.tagText}>{courseData.duration}</Text>
-          </View>
-          <View style={styles.tag}>
-            <Ionicons name="stats-chart-outline" size={16} color="#666" />
-            <Text style={styles.tagText}>{courseData.level}</Text>
-          </View>
+    <View style={{ flex: 1, backgroundColor: "white" }}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* IMAGEN DE CABECERA */}
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: courseImage }} style={styles.image} />
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
         </View>
 
-        {/* Temario */}
-        <Text style={styles.sectionTitle}>Temario del curso</Text>
-        {syllabus.map((item, index) => (
-          <View key={index} style={styles.listItem}>
-            <Ionicons name="checkmark-circle-outline" size={20} color="#34C759" />
-            <Text style={styles.listItemText}>{item}</Text>
-          </View>
-        ))}
+        <View style={styles.content}>
+          <Text style={styles.title}>{courseName}</Text>
 
-        {/* Requisitos */}
-        <Text style={styles.sectionTitle}>Requisitos</Text>
-        {requirements.map((item, index) => (
-          <View key={index} style={styles.listItem}>
-            <Ionicons name="alert-circle-outline" size={20} color="#FF9500" />
-            <Text style={styles.listItemText}>{item}</Text>
+          {/* BADGES DE INFO RÁPIDA */}
+          <View style={styles.infoRow}>
+            <View style={styles.infoBadge}>
+              <Ionicons name="time-outline" size={16} color="#2469F5" />
+              <Text style={styles.infoText}>{courseDuration}</Text>
+            </View>
+            <View style={styles.infoBadge}>
+              <Ionicons name="bar-chart-outline" size={16} color="#2469F5" />
+              <Text style={styles.infoText}>{courseLevel}</Text>
+            </View>
           </View>
-        ))}
 
-        {/* Botón de inscripción */}
-        <TouchableOpacity 
-          style={[styles.enrollButton, courseData.isEnrolled && styles.enrolledButton]}
-          onPress={() => alert(courseData.isEnrolled 
-            ? `Ya estás inscrito en ${courseData.name}` 
-            : `¡Te has inscrito en ${courseData.name}! (Simulado)`
-          )}
+          {/* SECCIÓN: DESCRIPCIÓN */}
+          <Text style={styles.sectionTitle}>Descripción del curso</Text>
+          <Text style={styles.descriptionText}>{courseDescription}</Text>
+
+          <View style={styles.divider} />
+
+          {/* SECCIÓN: TEMARIO (Mock de ejemplo) */}
+          <Text style={styles.sectionTitle}>Temario del curso</Text>
+          <View style={styles.listContainer}>
+            {[
+              "Introducción y conceptos clave",
+              "Herramientas y metodología",
+              "Casos prácticos reales",
+              "Evaluación final",
+            ].map((item, index) => (
+              <View key={index} style={styles.listItem}>
+                <Text style={styles.listNumber}>{index + 1}</Text>
+                <Text style={styles.listText}>{item}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* SECCIÓN: REQUISITOS */}
+          <Text style={styles.sectionTitle}>Requisitos</Text>
+          <View style={styles.requirementItem}>
+            <Ionicons name="checkmark-done" size={20} color="#34C759" />
+            <Text style={styles.requirementText}>
+              Conocimientos básicos del área.
+            </Text>
+          </View>
+          <View style={styles.requirementItem}>
+            <Ionicons name="checkmark-done" size={20} color="#34C759" />
+            <Text style={styles.requirementText}>
+              Conexión a internet y dispositivo compatible.
+            </Text>
+          </View>
+
+          {/* Margen inferior para no tapar el botón flotante */}
+          <View style={{ height: 100 }} />
+        </View>
+      </ScrollView>
+
+      {/* BOTÓN FLOTANTE INFERIOR (Siempre visible) */}
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[
+            styles.mainButton,
+            isEnrolled ? styles.buttonUnenroll : styles.buttonEnroll,
+          ]}
+          onPress={handleEnrollmentToggle}
+          disabled={loading}
         >
-          <Text style={styles.enrollButtonText}>
-            {courseData.isEnrolled ? '✔️ Inscrito' : 'Inscribirme ahora'}
-          </Text>
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <>
+              <Ionicons
+                name={isEnrolled ? "close-circle" : "add-circle"}
+                size={24}
+                color="white"
+              />
+              <Text style={styles.buttonText}>
+                {isEnrolled ? "Anular Inscripción" : "Inscribirme Ahora"}
+              </Text>
+            </>
+          )}
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
+  container: { flex: 1 },
+  imageContainer: { position: "relative" },
+  image: { width: "100%", height: 280 },
+  backButton: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    padding: 10,
+    borderRadius: 25,
   },
-  image: {
-    width: '100%',
-    height: 250,
-    resizeMode: 'cover',
-  },
-  content: {
-    padding: 20,
-  },
+  content: { padding: 20 },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1C1C1E',
-    marginBottom: 10,
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#1A1A1A",
+    marginBottom: 12,
   },
-  description: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
-    marginBottom: 15,
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F2F2F7',
+  infoRow: { flexDirection: "row", gap: 12, marginBottom: 25 },
+  infoBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E8F0FE",
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 20,
-    marginRight: 10,
+    gap: 6,
   },
-  tagText: {
-    marginLeft: 5,
-    color: '#666',
-    fontSize: 14,
-  },
+  infoText: { color: "#2469F5", fontWeight: "600", fontSize: 13 },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1C1C1E',
-    marginTop: 20,
+    fontWeight: "700",
+    color: "#333",
     marginBottom: 10,
   },
-  listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  listItemText: {
-    marginLeft: 10,
+  descriptionText: {
     fontSize: 15,
-    color: '#3A3A3C',
-    flex: 1,
+    color: "#666",
+    lineHeight: 22,
+    marginBottom: 10,
   },
-  enrollButton: {
-    backgroundColor: '#004A99',
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 30,
-    marginBottom: 20,
+  divider: { height: 1, backgroundColor: "#EEE", marginVertical: 20 },
+
+  // Estilos de la lista de temario
+  listContainer: { gap: 12 },
+  listItem: { flexDirection: "row", alignItems: "center", gap: 12 },
+  listNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#2469F5",
+    color: "white",
+    textAlign: "center",
+    lineHeight: 24,
+    fontSize: 12,
+    fontWeight: "bold",
   },
-  enrolledButton: {
-    backgroundColor: '#34C759',
+  listText: { fontSize: 15, color: "#444" },
+
+  // Estilos de requisitos
+  requirementItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
   },
-  enrollButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+  requirementText: { fontSize: 14, color: "#666" },
+
+  // Footer y Botón
+  footer: {
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+    padding: 20,
+    backgroundColor: "white",
+    borderTopWidth: 1,
+    borderTopColor: "#EEE",
   },
+  mainButton: {
+    flexDirection: "row",
+    padding: 18,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  buttonEnroll: { backgroundColor: "#2469F5" },
+  buttonUnenroll: { backgroundColor: "#FF3B30" },
+  buttonText: { color: "white", fontSize: 16, fontWeight: "bold" },
 });
 
 export default CourseDetailScreen;

@@ -1,7 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router"; // Importar Router
-import React, { useEffect, useState } from "react";
-import { mockStudents, mockCourses } from '../mocks/mocks';
+import { useFocusEffect, useRouter } from "expo-router"; // Importar Router
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,6 +15,7 @@ import {
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useAuth } from "../context/AuthContext"; // Importar Auth
 import { useStudent } from "../hooks/useStudent";
+import { mockCourses } from "../mocks/mocks";
 import {
   updateStudentProfile,
   uploadStudentPhoto,
@@ -25,7 +25,7 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
 
-  // USAMOS EL DNI DEL USUARIO LOGUEADO
+  // 1. EXTRAEMOS REFETCH PARA USARLO EN EL FOCO
   const {
     data: student,
     isLoading,
@@ -37,6 +37,13 @@ export default function ProfileScreen() {
   const [formData, setFormData] = useState({});
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [tempPhoto, setTempPhoto] = useState(null);
+
+  // 2. REFRESCAR AL ENTRAR EN LA PANTALLA
+  useFocusEffect(
+    useCallback(() => {
+      refetch(); // Esto vuelve a leer el AsyncStorage/Mock y actualiza la lista
+    }, [refetch]),
+  );
 
   useEffect(() => {
     if (student) {
@@ -187,50 +194,58 @@ export default function ProfileScreen() {
         />
       </View>
 
-            {/* SECCIÓN: MIS CURSOS (NUEVA) */}
-            {/* SECCIÓN: MIS CURSOS (NUEVA) - VERSIÓN CORREGIDA */}
+      {/* SECCIÓN: MIS CURSOS (NUEVA) - VERSIÓN CORREGIDA */}
       <Text style={styles.sectionTitle}>Mis Cursos</Text>
       <View style={styles.card}>
-        {/* Usamos directamente los enrollments del mock si existen */}
-        {mockStudents.find(s => s.dni === student?.dni)?.enrollments?.length > 0 ? (
-          mockStudents
-            .find(s => s.dni === student?.dni)
-            .enrollments.map((enrollment, index) => {
-              const curso = mockCourses.find(c => c.id === enrollment.name);
-              return (
-                <TouchableOpacity
-                  key={enrollment.name}
-                  style={[styles.courseRow, index === student.enrollments.length - 1 && { borderBottomWidth: 0 }]}
-                  onPress={() => {
-                    if (curso) {
-                      router.push({
-                        pathname: '/course-detail',
-                        params: {
-                          courseId: curso.id,
-                          courseName: curso.name,
-                          courseDescription: curso.description,
-                          courseDuration: curso.duration,
-                          courseLevel: curso.level,
-                          courseImage: curso.image,
-                          isEnrolled: 'true'
-                        }
-                      });
-                    }
-                  }}
-                >
-                  <View style={styles.courseIcon}>
-                    <Text>📘</Text>
-                  </View>
-                  <View style={styles.courseInfo}>
-                    <Text style={styles.courseName}>{enrollment.course_name}</Text>
-                    <Text style={styles.courseStatus}>
-                      Estado: {enrollment.status || "En curso"}
-                    </Text>
-                  </View>
-                  <Text style={styles.courseArrow}>›</Text>
-                </TouchableOpacity>
-              );
-            })
+        {/* IMPORTANTE: Usamos 'student.enrollments' que viene del hook actualizado */}
+        {student?.enrollments && student.enrollments.length > 0 ? (
+          student.enrollments.map((enrollment, index) => {
+            // Buscamos la info extendida del curso en los mocks usando el ID (enrollment.name)
+            const cursoInfo = mockCourses.find(
+              (c) => String(c.id) === String(enrollment.name),
+            );
+
+            return (
+              <TouchableOpacity
+                key={enrollment.name + index}
+                style={[
+                  styles.courseRow,
+                  index === student.enrollments.length - 1 && {
+                    borderBottomWidth: 0,
+                  },
+                ]}
+                onPress={() => {
+                  if (cursoInfo) {
+                    router.push({
+                      pathname: "/course-detail",
+                      params: {
+                        courseId: cursoInfo.id,
+                        courseName: cursoInfo.name,
+                        courseDescription: cursoInfo.description,
+                        courseDuration: cursoInfo.duration,
+                        courseLevel: cursoInfo.level,
+                        courseImage: cursoInfo.image,
+                        isEnrolled: "true",
+                      },
+                    });
+                  }
+                }}
+              >
+                <View style={styles.courseIcon}>
+                  <Text>{cursoInfo ? "📘" : "📙"}</Text>
+                </View>
+                <View style={styles.courseInfo}>
+                  <Text style={styles.courseName}>
+                    {enrollment.course_name}
+                  </Text>
+                  <Text style={styles.courseStatus}>
+                    {enrollment.status || "En curso"}
+                  </Text>
+                </View>
+                <Text style={styles.courseArrow}>›</Text>
+              </TouchableOpacity>
+            );
+          })
         ) : (
           <View style={styles.emptyCourses}>
             <Text style={styles.emptyCoursesText}>
@@ -407,19 +422,19 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   courseRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: "#F2F2F7",
   },
   courseIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F0F2F5',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F0F2F5",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
   courseInfo: {
@@ -427,27 +442,27 @@ const styles = StyleSheet.create({
   },
   courseName: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#1C1C1E',
+    fontWeight: "600",
+    color: "#1C1C1E",
     marginBottom: 2,
   },
   courseStatus: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
   courseArrow: {
     fontSize: 18,
-    color: '#8E8E93',
+    color: "#8E8E93",
     marginLeft: 8,
   },
   emptyCourses: {
     paddingVertical: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyCoursesText: {
     fontSize: 14,
-    color: '#8E8E93',
-    textAlign: 'center',
+    color: "#8E8E93",
+    textAlign: "center",
   },
   cancelBtn: { marginTop: 20, marginBottom: 20, alignItems: "center" },
 });
