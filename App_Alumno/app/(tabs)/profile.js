@@ -1,5 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { useFocusEffect, useRouter } from "expo-router"; // Importar Router
+import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -12,21 +13,20 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import DateTimePickerModal from "react-native-modal-datetime-picker";
 import SkeletonProfile from "../../components/SkeletonProfile";
-import { useAuth } from "../../context/AuthContext"; // Importar Auth
+import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { useStudent } from "../../hooks/useStudent";
 import { mockCourses } from "../../mocks/mocks";
 import {
   updateStudentProfile,
   uploadStudentPhoto,
 } from "../../services/studentService";
-
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const { colors, dark } = useTheme();
 
-  // 1. EXTRAEMOS REFETCH PARA USARLO EN EL FOCO
   const {
     data: student,
     isLoading,
@@ -39,10 +39,9 @@ export default function ProfileScreen() {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [tempPhoto, setTempPhoto] = useState(null);
 
-  // 2. REFRESCAR AL ENTRAR EN LA PANTALLA
   useFocusEffect(
     useCallback(() => {
-      refetch(); // Esto vuelve a leer el AsyncStorage/Mock y actualiza la lista
+      refetch();
     }, [refetch]),
   );
 
@@ -115,228 +114,283 @@ export default function ProfileScreen() {
     }
   };
 
-  if (isLoading) {
-    return <SkeletonProfile />;
-  }
+  if (isLoading) return <SkeletonProfile />;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 60 }}
-    >
-      {/* CABECERA */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={changePhoto} disabled={uploading}>
-          <View style={styles.avatarWrapper}>
-            {tempPhoto || student?.foto ? (
-              <Image
-                key={tempPhoto || student?.foto}
-                source={{ uri: tempPhoto || student?.foto }}
-                style={styles.avatarImg}
-              />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarLetter}>
-                  {student?.nombrePila?.charAt(0)}
-                </Text>
-              </View>
-            )}
-            <View style={styles.cameraIcon}>
-              {uploading ? (
-                <ActivityIndicator size="small" color="#FFF" />
-              ) : (
-                <Text style={{ fontSize: 12 }}>📸</Text>
-              )}
-            </View>
-          </View>
-        </TouchableOpacity>
-        <Text style={styles.nameText}>{student?.nombreCompleto}</Text>
-        <Text style={styles.idSubtext}>DNI: {student?.dni}</Text>
-        <TouchableOpacity
-          style={[styles.editBtn, isEditing && styles.saveBtn]}
-          onPress={isEditing ? handleSave : () => setIsEditing(true)}
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* BOTÓN DE AJUSTES INDEPENDIENTE */}
+      <TouchableOpacity
+        style={styles.settingsButton}
+        onPress={() => router.push("/settings")}
+      >
+        <Ionicons name="settings-outline" size={26} color={colors.primary} />
+      </TouchableOpacity>
+
+      <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
+        {/* CABECERA */}
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: colors.card, borderBottomColor: colors.border },
+          ]}
         >
-          <Text style={[styles.editBtnText, isEditing && { color: "#FFF" }]}>
-            {isEditing ? "✓ Guardar Cambios" : "✎ Editar Perfil"}
+          <TouchableOpacity onPress={changePhoto} disabled={uploading}>
+            <View style={styles.avatarWrapper}>
+              {tempPhoto || student?.foto ? (
+                <Image
+                  key={tempPhoto || student?.foto}
+                  source={{ uri: tempPhoto || student?.foto }}
+                  style={styles.avatarImg}
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.avatarPlaceholder,
+                    { backgroundColor: colors.primary },
+                  ]}
+                >
+                  <Text style={styles.avatarLetter}>
+                    {student?.nombrePila?.charAt(0)}
+                  </Text>
+                </View>
+              )}
+              <View style={[styles.cameraIcon, { borderColor: colors.card }]}>
+                {uploading ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <Text style={{ fontSize: 12 }}>📸</Text>
+                )}
+              </View>
+            </View>
+          </TouchableOpacity>
+          <Text style={[styles.nameText, { color: colors.text }]}>
+            {student?.nombreCompleto}
           </Text>
-        </TouchableOpacity>
-      </View>
+          <Text style={[styles.idSubtext, { color: colors.subtext }]}>
+            DNI: {student?.dni}
+          </Text>
+          <TouchableOpacity
+            style={[
+              styles.editBtn,
+              { backgroundColor: dark ? "#3A3A3C" : "#F2F2F7" },
+              isEditing && styles.saveBtn,
+            ]}
+            onPress={isEditing ? handleSave : () => setIsEditing(true)}
+          >
+            <Text
+              style={[
+                styles.editBtnText,
+                { color: colors.primary },
+                isEditing && { color: "#FFF" },
+              ]}
+            >
+              {isEditing ? "✓ Guardar Cambios" : "✎ Editar Perfil"}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* BLOQUES DE INFO (Los que ya tenías) */}
-      <Text style={styles.sectionTitle}>Identificación Académica</Text>
-      <View style={styles.card}>
-        <InfoRow label="DNI / NIE" value={student?.dni} icon="🆔" />
-        <InfoRow label="Situación" value={student?.status} icon="📊" last />
-      </View>
+        <Text style={[styles.sectionTitle, { color: colors.subtext }]}>
+          Identificación Académica
+        </Text>
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
+          <InfoRow
+            label="DNI / NIE"
+            value={student?.dni}
+            icon="🆔"
+            colors={colors}
+          />
+          <InfoRow
+            label="Situación"
+            value={student?.status}
+            icon="📊"
+            colors={colors}
+            last
+          />
+        </View>
 
-      <Text style={styles.sectionTitle}>Datos de Contacto</Text>
-      <View style={styles.card}>
-        <EditableRow
-          label="Email"
-          value={formData.student_email_id}
-          isEditing={isEditing}
-          onChange={(val) =>
-            setFormData({ ...formData, student_email_id: val })
-          }
-          icon="✉️"
-        />
-        <EditableRow
-          label="Teléfono"
-          value={formData.student_mobile_number}
-          isEditing={isEditing}
-          onChange={(val) =>
-            setFormData({ ...formData, student_mobile_number: val })
-          }
-          icon="📱"
-          last
-        />
-      </View>
+        <Text style={[styles.sectionTitle, { color: colors.subtext }]}>
+          Datos de Contacto
+        </Text>
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
+          <EditableRow
+            label="Email"
+            value={formData.student_email_id}
+            isEditing={isEditing}
+            onChange={(val) =>
+              setFormData({ ...formData, student_email_id: val })
+            }
+            icon="✉️"
+            colors={colors}
+          />
+          <EditableRow
+            label="Teléfono"
+            value={formData.student_mobile_number}
+            isEditing={isEditing}
+            onChange={(val) =>
+              setFormData({ ...formData, student_mobile_number: val })
+            }
+            icon="📱"
+            colors={colors}
+            last
+          />
+        </View>
 
-      {/* SECCIÓN: MIS CURSOS (NUEVA) - VERSIÓN CORREGIDA */}
-      <Text style={styles.sectionTitle}>Mis Cursos</Text>
-      <View style={styles.card}>
-        {/* IMPORTANTE: Usamos 'student.enrollments' que viene del hook actualizado */}
-        {student?.enrollments && student.enrollments.length > 0 ? (
-          student.enrollments.map((enrollment, index) => {
-            // Buscamos la info extendida del curso en los mocks usando el ID (enrollment.name)
-            const cursoInfo = mockCourses.find(
-              (c) => String(c.id) === String(enrollment.name),
-            );
-
-            return (
-              <TouchableOpacity
-                key={enrollment.name + index}
-                style={[
-                  styles.courseRow,
-                  index === student.enrollments.length - 1 && {
-                    borderBottomWidth: 0,
-                  },
-                ]}
-                onPress={() => {
-                  if (cursoInfo) {
+        <Text style={[styles.sectionTitle, { color: colors.subtext }]}>
+          Mis Cursos
+        </Text>
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
+          {student?.enrollments && student.enrollments.length > 0 ? (
+            student.enrollments.map((enrollment, index) => {
+              const cursoInfo = mockCourses.find(
+                (c) => String(c.id) === String(enrollment.name),
+              );
+              return (
+                <TouchableOpacity
+                  key={enrollment.name + index}
+                  style={[
+                    styles.courseRow,
+                    { borderBottomColor: colors.border },
+                    index === student.enrollments.length - 1 && {
+                      borderBottomWidth: 0,
+                    },
+                  ]}
+                  onPress={() =>
+                    cursoInfo &&
                     router.push({
                       pathname: "/course-detail",
-                      params: {
-                        courseId: cursoInfo.id,
-                        courseName: cursoInfo.name,
-                        courseDescription: cursoInfo.description,
-                        courseDuration: cursoInfo.duration,
-                        courseLevel: cursoInfo.level,
-                        courseImage: cursoInfo.image,
-                        isEnrolled: "true",
-                      },
-                    });
+                      params: { ...cursoInfo, isEnrolled: "true" },
+                    })
                   }
-                }}
+                >
+                  <View
+                    style={[
+                      styles.courseIcon,
+                      { backgroundColor: dark ? "#3A3A3C" : "#F0F2F5" },
+                    ]}
+                  >
+                    <Text>{cursoInfo ? "📘" : "📙"}</Text>
+                  </View>
+                  <View style={styles.courseInfo}>
+                    <Text style={[styles.courseName, { color: colors.text }]}>
+                      {enrollment.course_name}
+                    </Text>
+                    <Text
+                      style={[styles.courseStatus, { color: colors.subtext }]}
+                    >
+                      {enrollment.status || "En curso"}
+                    </Text>
+                  </View>
+                  <Text style={[styles.courseArrow, { color: colors.subtext }]}>
+                    ›
+                  </Text>
+                </TouchableOpacity>
+              );
+            })
+          ) : (
+            <View style={styles.emptyCourses}>
+              <Text
+                style={[styles.emptyCoursesText, { color: colors.subtext }]}
               >
-                <View style={styles.courseIcon}>
-                  <Text>{cursoInfo ? "📘" : "📙"}</Text>
-                </View>
-                <View style={styles.courseInfo}>
-                  <Text style={styles.courseName}>
-                    {enrollment.course_name}
-                  </Text>
-                  <Text style={styles.courseStatus}>
-                    {enrollment.status || "En curso"}
-                  </Text>
-                </View>
-                <Text style={styles.courseArrow}>›</Text>
-              </TouchableOpacity>
-            );
-          })
-        ) : (
-          <View style={styles.emptyCourses}>
-            <Text style={styles.emptyCoursesText}>
-              No estás inscrito en ningún curso actualmente.
-            </Text>
-          </View>
-        )}
-      </View>
+                No estás inscrito en ningún curso.
+              </Text>
+            </View>
+          )}
+        </View>
 
-      {/* --- EL BOTÓN DE CERRAR SESIÓN --- */}
-      <Text style={styles.sectionTitle}>Sesión</Text>
-      <View style={styles.card}>
-        <TouchableOpacity
-          style={[styles.row, { borderBottomWidth: 0 }]}
-          onPress={handleLogout}
-        >
-          <Text style={styles.rowIcon}>🚪</Text>
-          <View>
-            <Text
-              style={[styles.rowValue, { color: "#FF3B30", fontWeight: "600" }]}
-            >
-              Cerrar Sesión
-            </Text>
-            <Text style={styles.rowLabel}>
-              Salir de la cuenta de {student?.nombrePila}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      {isEditing && (
-        <TouchableOpacity
-          style={styles.cancelBtn}
-          onPress={() => setIsEditing(false)}
-        >
-          <Text style={{ color: "#FF3B30", fontWeight: "600" }}>
-            Cancelar cambios
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      <DateTimePickerModal
-        isVisible={isDatePickerVisible}
-        mode="date"
-        onConfirm={(date) => {
-          setFormData({
-            ...formData,
-            date_of_birth: date.toISOString().split("T")[0],
-          });
-          setDatePickerVisibility(false);
-        }}
-        onCancel={() => setDatePickerVisibility(false)}
-        maximumDate={new Date()}
-      />
-    </ScrollView>
+        <Text style={[styles.sectionTitle, { color: colors.subtext }]}>
+          Sesión
+        </Text>
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
+          <TouchableOpacity
+            style={[styles.row, { borderBottomWidth: 0 }]}
+            onPress={handleLogout}
+          >
+            <Text style={styles.rowIcon}>🚪</Text>
+            <View>
+              <Text
+                style={[
+                  styles.rowValue,
+                  { color: "#FF3B30", fontWeight: "600" },
+                ]}
+              >
+                Cerrar Sesión
+              </Text>
+              <Text style={[styles.rowLabel, { color: colors.subtext }]}>
+                Salir de {student?.nombrePila}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
-// Mantenemos tus componentes auxiliares InfoRow, EditableRow y los styles...
-const InfoRow = ({ label, value, icon, last }) => (
-  <View style={[styles.row, last && { borderBottomWidth: 0 }]}>
+// COMPONENTES AUXILIARES CON COLORES DINÁMICOS
+const InfoRow = ({ label, value, icon, last, colors }) => (
+  <View
+    style={[
+      styles.row,
+      { borderBottomColor: colors.border },
+      last && { borderBottomWidth: 0 },
+    ]}
+  >
     <Text style={styles.rowIcon}>{icon}</Text>
     <View>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value || "No disponible"}</Text>
+      <Text style={[styles.rowLabel, { color: colors.subtext }]}>{label}</Text>
+      <Text style={[styles.rowValue, { color: colors.text }]}>
+        {value || "No disponible"}
+      </Text>
     </View>
   </View>
 );
 
-const EditableRow = ({ label, value, isEditing, onChange, icon, last }) => (
-  <View style={[styles.row, last && { borderBottomWidth: 0 }]}>
+const EditableRow = ({
+  label,
+  value,
+  isEditing,
+  onChange,
+  icon,
+  last,
+  colors,
+}) => (
+  <View
+    style={[
+      styles.row,
+      { borderBottomColor: colors.border },
+      last && { borderBottomWidth: 0 },
+    ]}
+  >
     <Text style={styles.rowIcon}>{icon}</Text>
     <View style={{ flex: 1 }}>
-      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={[styles.rowLabel, { color: colors.subtext }]}>{label}</Text>
       {isEditing ? (
-        <TextInput style={styles.input} value={value} onChangeText={onChange} />
+        <TextInput
+          style={[
+            styles.input,
+            { color: colors.primary, borderBottomColor: colors.primary },
+          ]}
+          value={value}
+          onChangeText={onChange}
+        />
       ) : (
-        <Text style={styles.rowValue}>{value || "No definido"}</Text>
+        <Text style={[styles.rowValue, { color: colors.text }]}>
+          {value || "No definido"}
+        </Text>
       )}
     </View>
   </View>
 );
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F2F2F7" },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
-  header: {
-    backgroundColor: "#FFF",
-    paddingVertical: 30,
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E7",
+  settingsButton: {
+    position: "absolute",
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    padding: 10,
   },
+  header: { paddingVertical: 30, alignItems: "center", borderBottomWidth: 1 },
   avatarWrapper: { width: 90, height: 90, position: "relative" },
   avatarImg: {
     width: 90,
@@ -348,7 +402,6 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: "#004A99",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -364,27 +417,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#FFF",
-    elevation: 4,
   },
-  nameText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 12,
-    color: "#1C1C1E",
-  },
-  idSubtext: { fontSize: 13, color: "#8E8E93", marginBottom: 15 },
-  editBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#F2F2F7",
-  },
+  nameText: { fontSize: 20, fontWeight: "bold", marginTop: 12 },
+  idSubtext: { fontSize: 13, marginBottom: 15 },
+  editBtn: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20 },
   saveBtn: { backgroundColor: "#34C759" },
-  editBtnText: { fontSize: 14, fontWeight: "600", color: "#004A99" },
+  editBtnText: { fontSize: 14, fontWeight: "600" },
   sectionTitle: {
     fontSize: 11,
-    color: "#8E8E93",
     marginLeft: 20,
     marginTop: 25,
     marginBottom: 8,
@@ -392,75 +432,39 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   card: {
-    backgroundColor: "#FFF",
     marginHorizontal: 16,
     borderRadius: 12,
     paddingHorizontal: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
     elevation: 2,
   },
   row: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F2F2F7",
     flexDirection: "row",
     alignItems: "center",
   },
   rowIcon: { fontSize: 18, marginRight: 15, width: 25, textAlign: "center" },
-  rowLabel: { fontSize: 11, color: "#8E8E93" },
-  rowValue: { fontSize: 16, color: "#1C1C1E", marginTop: 1 },
-  input: {
-    fontSize: 16,
-    color: "#007AFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#007AFF",
-    paddingVertical: 2,
-  },
+  rowLabel: { fontSize: 11 },
+  rowValue: { fontSize: 16, marginTop: 1 },
+  input: { fontSize: 16, borderBottomWidth: 1, paddingVertical: 2 },
   courseRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F2F2F7",
   },
   courseIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#F0F2F5",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
-  courseInfo: {
-    flex: 1,
-  },
-  courseName: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#1C1C1E",
-    marginBottom: 2,
-  },
-  courseStatus: {
-    fontSize: 12,
-    color: "#8E8E93",
-  },
-  courseArrow: {
-    fontSize: 18,
-    color: "#8E8E93",
-    marginLeft: 8,
-  },
-  emptyCourses: {
-    paddingVertical: 20,
-    alignItems: "center",
-  },
-  emptyCoursesText: {
-    fontSize: 14,
-    color: "#8E8E93",
-    textAlign: "center",
-  },
-  cancelBtn: { marginTop: 20, marginBottom: 20, alignItems: "center" },
+  courseInfo: { flex: 1 },
+  courseName: { fontSize: 15, fontWeight: "600", marginBottom: 2 },
+  courseStatus: { fontSize: 12 },
+  courseArrow: { fontSize: 18, marginLeft: 8 },
+  emptyCourses: { paddingVertical: 20, alignItems: "center" },
+  emptyCoursesText: { fontSize: 14, textAlign: "center" },
 });

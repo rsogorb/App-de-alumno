@@ -10,12 +10,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { useStudent } from "../../hooks/useStudent";
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { data: student, isLoading, isError } = useStudent(user?.dni);
+  const { colors, dark } = useTheme();
 
   const menuItems = [
     {
@@ -71,33 +73,40 @@ export default function HomeScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { justifyContent: "center" }]}>
-        <ActivityIndicator size="large" color="#004A99" />
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", backgroundColor: colors.background },
+        ]}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.welcomeText}>
+          <Text style={[styles.welcomeText, { color: colors.text }]}>
             ¡Hola de nuevo,{" "}
-            {
-              (student?.nombrePila || user?.first_name || "Alumno")
-                .toLowerCase()
-                .replace(/^\w/, (c) => c.toUpperCase()) // Esto solo capitaliza la PRIMERA letra de todo el nombre
-            }
+            {(student?.nombrePila || user?.first_name || "Alumno")
+              .toLowerCase()
+              .replace(/^\w/, (c) => c.toUpperCase())}
             !
           </Text>
-          <Text style={styles.subtitleText}>Panel del Alumno - Grupo ATU</Text>
+          <Text style={[styles.subtitleText, { color: colors.subtext }]}>
+            Panel del Alumno - Grupo ATU
+          </Text>
         </View>
 
         <View style={styles.grid}>
           {menuItems.map((item) => (
             <TouchableOpacity
               key={item.id}
-              style={styles.card}
+              style={[styles.card, { backgroundColor: colors.card }]}
               onPress={() => router.push(item.route)}
             >
               <View
@@ -105,14 +114,23 @@ export default function HomeScreen() {
               >
                 <Ionicons name={item.icon} size={30} color="#FFF" />
               </View>
-              <Text style={styles.cardTitle}>{item.title}</Text>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>
+                {item.title}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <View style={styles.infoBox}>
-          <Text style={styles.infoTitle}>Estado de cuenta</Text>
-          <Text style={styles.infoText}>
+        <View
+          style={[
+            styles.infoBox,
+            { backgroundColor: colors.card, borderLeftColor: colors.primary },
+          ]}
+        >
+          <Text style={[styles.infoTitle, { color: colors.subtext }]}>
+            Estado de cuenta
+          </Text>
+          <Text style={[styles.infoText, { color: colors.text }]}>
             {student?.enrollments?.length > 0
               ? `Tienes ${student.enrollments.length} curso(s) activo(s)`
               : "No tienes cursos activos actualmente"}

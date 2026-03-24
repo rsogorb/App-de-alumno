@@ -1,42 +1,58 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { PropsWithChildren, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+// 1. Importamos tu contexto (ajusta la ruta si es necesario)
+import { useTheme } from "../context/ThemeContext";
 
-import { ThemedText } from "./themed-text";
-import { ThemedView } from "./themed-view";
-
-export default function Collapsible({ children, title }) {
+export function Collapsible({
+  children,
+  title,
+}: PropsWithChildren & { title: string }) {
   const [isOpen, setIsOpen] = useState(false);
 
+  // 2. Usamos tus colores globales
+  const { colors, dark } = useTheme();
+
   return (
-    <ThemedView style={styles.container}>
+    // 3. Cambiamos ThemedView por View con tu color de fondo
+    <View style={{ backgroundColor: "transparent" }}>
       <TouchableOpacity
         style={styles.heading}
         onPress={() => setIsOpen((value) => !value)}
         activeOpacity={0.8}
       >
-        <Ionicons
-          name={isOpen ? "chevron-down" : "chevron-forward"}
+        <IconSymbol
+          name="chevron.right"
           size={18}
-          color="#004A99"
+          weight="medium"
+          // 4. El icono ahora usa tu color primario o el de texto
+          color={colors.primary}
+          style={{ transform: [{ rotate: isOpen ? "90deg" : "0deg" }] }}
         />
-        <ThemedText type="defaultSemiBold">{title}</ThemedText>
+
+        {/* 5. El texto ahora usa tu color de texto global */}
+        <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
       </TouchableOpacity>
+
       {isOpen && <View style={styles.content}>{children}</View>}
-    </ThemedView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 10 },
   heading: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
     paddingVertical: 10,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "600",
   },
   content: {
     marginTop: 6,
-    marginLeft: 24,
+    marginLeft: 26,
+    marginBottom: 10,
   },
 });

@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "../context/AuthContext";
+import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import {
   requestPermissions,
   setupNotificationChannel,
@@ -15,6 +16,7 @@ function RootLayoutNav() {
   const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const { colors, dark } = useTheme();
 
   // Configurar notificaciones al iniciar
   useEffect(() => {
@@ -46,16 +48,24 @@ function RootLayoutNav() {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "#F2F2F7",
+          backgroundColor: colors.background,
         }}
       >
-        <ActivityIndicator size="large" color="#004A99" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.background }, // <-- Esto pone el fondo oscuro a todas las pantallas
+        headerStyle: { backgroundColor: colors.card },
+        headerTintColor: colors.primary,
+        headerTitleStyle: { color: colors.text },
+      }}
+    >
       <Stack.Screen name="login" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen
@@ -64,7 +74,18 @@ function RootLayoutNav() {
       />
       <Stack.Screen
         name="course-detail"
-        options={{ title: "Detalle del Curso" }}
+        options={{
+          headerShown: true,
+          title: "Detalle del Curso",
+        }}
+      />
+      <Stack.Screen
+        name="settings"
+        options={{
+          headerShown: true,
+          title: "Ajustes",
+          headerBackTitle: "Atrás",
+        }}
       />
     </Stack>
   );
@@ -74,9 +95,11 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <RootLayoutNav />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <RootLayoutNav />
+          </AuthProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </SafeAreaProvider>
   );

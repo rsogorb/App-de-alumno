@@ -1,15 +1,14 @@
 import type { PropsWithChildren, ReactElement } from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native"; // Cambiamos ThemedView por View
 import Animated, {
-    interpolate,
-    useAnimatedRef,
-    useAnimatedStyle,
-    useScrollOffset,
+  interpolate,
+  useAnimatedRef,
+  useAnimatedStyle,
+  useScrollOffset,
 } from "react-native-reanimated";
 
-import { ThemedView } from "@/components/themed-view";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useThemeColor } from "@/hooks/use-theme-color";
+// 1. IMPORTA TU CONTEXTO
+import { useTheme } from "../context/ThemeContext";
 
 const HEADER_HEIGHT = 250;
 
@@ -23,10 +22,12 @@ export default function ParallaxScrollView({
   headerImage,
   headerBackgroundColor,
 }: Props) {
-  const backgroundColor = useThemeColor({}, "background");
-  const colorScheme = useColorScheme() ?? "light";
+  // 2. USA TU HOOK EN LUGAR DEL DE EXPO
+  const { colors, dark } = useTheme();
+
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const scrollOffset = useScrollOffset(scrollRef);
+
   const headerAnimatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
@@ -51,27 +52,34 @@ export default function ParallaxScrollView({
   return (
     <Animated.ScrollView
       ref={scrollRef}
-      style={{ backgroundColor, flex: 1 }}
+      // 3. USA TUS COLORES DINÁMICOS AQUÍ
+      style={{ backgroundColor: colors.background, flex: 1 }}
       scrollEventThrottle={16}
     >
       <Animated.View
         style={[
           styles.header,
-          { backgroundColor: headerBackgroundColor[colorScheme] },
+          // 4. USA TU VARIABLE 'dark' PARA ELEGIR EL COLOR DE LA CABECERA
+          {
+            backgroundColor: dark
+              ? headerBackgroundColor.dark
+              : headerBackgroundColor.light,
+          },
           headerAnimatedStyle,
         ]}
       >
         {headerImage}
       </Animated.View>
-      <ThemedView style={styles.content}>{children}</ThemedView>
+
+      {/* 5. CAMBIAMOS THEMEDVIEW POR UN VIEW NORMAL CON TU COLOR */}
+      <View style={[styles.content, { backgroundColor: colors.background }]}>
+        {children}
+      </View>
     </Animated.ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   header: {
     height: HEADER_HEIGHT,
     overflow: "hidden",
