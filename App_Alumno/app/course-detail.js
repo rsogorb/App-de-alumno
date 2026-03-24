@@ -12,12 +12,14 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { sendLocalNotification } from "../services/notificationService"; // ← NUEVA IMPORTACIÓN
+import { useTheme } from "../context/ThemeContext"; // Importante
+import { sendLocalNotification } from "../services/notificationService";
 import { enrollInCourse, unenrollFromCourse } from "../services/studentService";
 
 const CourseDetailScreen = () => {
   const router = useRouter();
   const { user } = useAuth();
+  const { colors, dark } = useTheme(); // Usamos tu contexto
 
   const {
     courseId,
@@ -53,10 +55,9 @@ const CourseDetailScreen = () => {
                 const success = await unenrollFromCourse(user.dni, courseId);
                 if (success) {
                   setIsEnrolled(false);
-                  // NOTIFICACIÓN AL DARSE DE BAJA
                   await sendLocalNotification(
                     "Baja confirmada",
-                    `Te has dado de baja de ${courseName}. ¡Esperamos verte de nuevo!`,
+                    `Te has dado de baja de ${courseName}.`,
                     { courseId },
                   );
                 }
@@ -71,10 +72,9 @@ const CourseDetailScreen = () => {
         });
         if (success) {
           setIsEnrolled(true);
-          // NOTIFICACIÓN AL INSCRIBIRSE
           await sendLocalNotification(
             "¡Inscripción exitosa!",
-            `Te has inscrito en ${courseName}. ¡Aprovecha al máximo tu curso!`,
+            `Te has inscrito en ${courseName}.`,
             { courseId },
           );
           Alert.alert("¡Hecho!", "Te has inscrito correctamente.");
@@ -88,7 +88,7 @@ const CourseDetailScreen = () => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "white" }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* IMAGEN DE CABECERA */}
         <View style={styles.imageContainer}>
@@ -102,28 +102,55 @@ const CourseDetailScreen = () => {
         </View>
 
         <View style={styles.content}>
-          <Text style={styles.title}>{courseName}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>
+            {courseName || "Cargando curso..."}
+          </Text>
 
           {/* BADGES DE INFO RÁPIDA */}
           <View style={styles.infoRow}>
-            <View style={styles.infoBadge}>
-              <Ionicons name="time-outline" size={16} color="#2469F5" />
-              <Text style={styles.infoText}>{courseDuration}</Text>
+            <View
+              style={[
+                styles.infoBadge,
+                { backgroundColor: dark ? "#2C2C2E" : "#E8F0FE" },
+              ]}
+            >
+              <Ionicons name="time-outline" size={16} color={colors.primary} />
+              <Text style={[styles.infoText, { color: colors.primary }]}>
+                {courseDuration || "N/A"}
+              </Text>
             </View>
-            <View style={styles.infoBadge}>
-              <Ionicons name="bar-chart-outline" size={16} color="#2469F5" />
-              <Text style={styles.infoText}>{courseLevel}</Text>
+            <View
+              style={[
+                styles.infoBadge,
+                { backgroundColor: dark ? "#2C2C2E" : "#E8F0FE" },
+              ]}
+            >
+              <Ionicons
+                name="bar-chart-outline"
+                size={16}
+                color={colors.primary}
+              />
+              <Text style={[styles.infoText, { color: colors.primary }]}>
+                {courseLevel || "General"}
+              </Text>
             </View>
           </View>
 
           {/* SECCIÓN: DESCRIPCIÓN */}
-          <Text style={styles.sectionTitle}>Descripción del curso</Text>
-          <Text style={styles.descriptionText}>{courseDescription}</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Descripción del curso
+          </Text>
+          <Text style={[styles.descriptionText, { color: colors.subtext }]}>
+            {courseDescription ||
+              "No hay descripción disponible para este curso."}
+          </Text>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-          {/* SECCIÓN: TEMARIO (Mock de ejemplo) */}
-          <Text style={styles.sectionTitle}>Temario del curso</Text>
+          {/* SECCIÓN: TEMARIO */}
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Temario del curso
+          </Text>
           <View style={styles.listContainer}>
             {[
               "Introducción y conceptos clave",
@@ -132,40 +159,61 @@ const CourseDetailScreen = () => {
               "Evaluación final",
             ].map((item, index) => (
               <View key={index} style={styles.listItem}>
-                <Text style={styles.listNumber}>{index + 1}</Text>
-                <Text style={styles.listText}>{item}</Text>
+                <Text
+                  style={[
+                    styles.listNumber,
+                    { backgroundColor: colors.primary },
+                  ]}
+                >
+                  {index + 1}
+                </Text>
+                <Text style={[styles.listText, { color: colors.text }]}>
+                  {item}
+                </Text>
               </View>
             ))}
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           {/* SECCIÓN: REQUISITOS */}
-          <Text style={styles.sectionTitle}>Requisitos</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Requisitos
+          </Text>
           <View style={styles.requirementItem}>
             <Ionicons name="checkmark-done" size={20} color="#34C759" />
-            <Text style={styles.requirementText}>
+            <Text style={[styles.requirementText, { color: colors.subtext }]}>
               Conocimientos básicos del área.
             </Text>
           </View>
           <View style={styles.requirementItem}>
             <Ionicons name="checkmark-done" size={20} color="#34C759" />
-            <Text style={styles.requirementText}>
-              Conexión a internet y dispositivo compatible.
+            <Text style={[styles.requirementText, { color: colors.subtext }]}>
+              Conexión a internet estable.
             </Text>
           </View>
 
-          {/* Margen inferior para no tapar el botón flotante */}
-          <View style={{ height: 100 }} />
+          <View style={{ height: 120 }} />
         </View>
       </ScrollView>
 
-      {/* BOTÓN FLOTANTE INFERIOR (Siempre visible) */}
-      <View style={styles.footer}>
+      {/* BOTÓN FLOTANTE INFERIOR */}
+      <View
+        style={[
+          styles.footer,
+          {
+            backgroundColor: colors.card,
+            borderTopColor: colors.border,
+            paddingBottom: 30, // Espacio extra para notch
+          },
+        ]}
+      >
         <TouchableOpacity
           style={[
             styles.mainButton,
-            isEnrolled ? styles.buttonUnenroll : styles.buttonEnroll,
+            isEnrolled
+              ? styles.buttonUnenroll
+              : { backgroundColor: colors.primary },
           ]}
           onPress={handleEnrollmentToggle}
           disabled={loading}
@@ -193,81 +241,56 @@ const CourseDetailScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   imageContainer: { position: "relative" },
-  image: { width: "100%", height: 280 },
+  image: { width: "100%", height: 280, backgroundColor: "#ccc" },
   backButton: {
     position: "absolute",
     top: 50,
     left: 20,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     padding: 10,
     borderRadius: 25,
   },
   content: { padding: 20 },
-  title: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#1A1A1A",
-    marginBottom: 12,
-  },
+  title: { fontSize: 24, fontWeight: "800", marginBottom: 12 },
   infoRow: { flexDirection: "row", gap: 12, marginBottom: 25 },
   infoBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#E8F0FE",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
     gap: 6,
   },
-  infoText: { color: "#2469F5", fontWeight: "600", fontSize: 13 },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: 10,
-  },
-  descriptionText: {
-    fontSize: 15,
-    color: "#666",
-    lineHeight: 22,
-    marginBottom: 10,
-  },
-  divider: { height: 1, backgroundColor: "#EEE", marginVertical: 20 },
-
-  // Estilos de la lista de temario
+  infoText: { fontWeight: "700", fontSize: 13 },
+  sectionTitle: { fontSize: 18, fontWeight: "700", marginBottom: 10 },
+  descriptionText: { fontSize: 15, lineHeight: 22, marginBottom: 10 },
+  divider: { height: 1, marginVertical: 20 },
   listContainer: { gap: 12 },
   listItem: { flexDirection: "row", alignItems: "center", gap: 12 },
   listNumber: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "#2469F5",
     color: "white",
     textAlign: "center",
     lineHeight: 24,
     fontSize: 12,
     fontWeight: "bold",
   },
-  listText: { fontSize: 15, color: "#444" },
-
-  // Estilos de requisitos
+  listText: { fontSize: 15 },
   requirementItem: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     marginBottom: 8,
   },
-  requirementText: { fontSize: 14, color: "#666" },
-
-  // Footer y Botón
+  requirementText: { fontSize: 14 },
   footer: {
     position: "absolute",
     bottom: 0,
     width: "100%",
     padding: 20,
-    backgroundColor: "white",
     borderTopWidth: 1,
-    borderTopColor: "#EEE",
   },
   mainButton: {
     flexDirection: "row",
@@ -277,7 +300,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 10,
   },
-  buttonEnroll: { backgroundColor: "#2469F5" },
   buttonUnenroll: { backgroundColor: "#FF3B30" },
   buttonText: { color: "white", fontSize: 16, fontWeight: "bold" },
 });

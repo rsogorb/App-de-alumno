@@ -53,7 +53,7 @@ const CursosScreen = () => {
     setIsLoading(true);
     try {
       const cursosApp = await getCursos();
-      const { getStudentProfile } = require("../services/studentService");
+      const { getStudentProfile } = require("../../services/studentService");
       const profile = await getStudentProfile(user.dni);
 
       if (profile) {

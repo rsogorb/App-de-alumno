@@ -258,7 +258,17 @@ export default function ProfileScreen() {
                     cursoInfo &&
                     router.push({
                       pathname: "/course-detail",
-                      params: { ...cursoInfo, isEnrolled: "true" },
+                      params: {
+                        courseId: cursoInfo.id,
+                        courseName: cursoInfo.name || cursoInfo.titulo, // Usa el nombre que tengan tus mocks
+                        courseDescription:
+                          cursoInfo.description || cursoInfo.descripcion,
+                        courseDuration:
+                          cursoInfo.duration || cursoInfo.duracion,
+                        courseLevel: cursoInfo.level || cursoInfo.nivel,
+                        courseImage: cursoInfo.image || cursoInfo.imagen,
+                        isEnrolled: "true",
+                      },
                     })
                   }
                 >
