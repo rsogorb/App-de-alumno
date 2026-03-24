@@ -9,8 +9,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "../../src/context/AuthContext";
-import { useStudent } from "../../src/hooks/useStudent";
+import { useAuth } from "../../context/AuthContext";
+import { useStudent } from "../../hooks/useStudent";
 
 export default function HomeScreen() {
   const router = useRouter();

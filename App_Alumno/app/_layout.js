@@ -3,8 +3,11 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import React, { useEffect } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { AuthProvider, useAuth } from "../src/context/AuthContext";
-import { setupNotificationChannel, requestPermissions } from "../src/services/notificationService";
+import { AuthProvider, useAuth } from "../context/AuthContext";
+import {
+  requestPermissions,
+  setupNotificationChannel,
+} from "../services/notificationService";
 
 const queryClient = new QueryClient();
 
@@ -16,7 +19,7 @@ function RootLayoutNav() {
   // Configurar notificaciones al iniciar
   useEffect(() => {
     const setupNotifications = async () => {
-      if (Platform.OS === 'android') {
+      if (Platform.OS === "android") {
         await setupNotificationChannel();
       }
       await requestPermissions();
@@ -59,7 +62,10 @@ function RootLayoutNav() {
         name="register"
         options={{ headerShown: true, title: "Registro" }}
       />
-      <Stack.Screen name="course-detail" options={{ title: "Detalle del Curso" }} />
+      <Stack.Screen
+        name="course-detail"
+        options={{ title: "Detalle del Curso" }}
+      />
     </Stack>
   );
 }

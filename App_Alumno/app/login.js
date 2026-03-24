@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useAuth } from "../src/context/AuthContext";
-import { mockStudents } from "../src/mocks/mocks";
+import { useAuth } from "../context/AuthContext";
+import { mockStudents } from "../mocks/mocks";
 
 export default function LoginScreen() {
   const router = useRouter();
