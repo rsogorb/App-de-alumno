@@ -5,6 +5,7 @@ import {
   FlatList,
   Image,
   Modal,
+  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
@@ -13,6 +14,7 @@ import {
 } from "react-native";
 import SkeletonCourseCard from "../../components/SkeletonCourseCard";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { getCursos } from "../../services/cursosServices";
 
 const CursosScreen = () => {
@@ -23,6 +25,7 @@ const CursosScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentFilter, setCurrentFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCity, setSelectedCity] = useState("");
@@ -30,6 +33,8 @@ const CursosScreen = () => {
   const [selectedDuration, setSelectedDuration] = useState("");
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
   const router = useRouter();
+
+  const { colors, dark } = useTheme();
 
   const cities = ["Todas", "Almería", "Madrid", "Barcelona"];
   const levels = ["Todos", "Avanzado", "Intermedio", "Experto"];
@@ -39,6 +44,12 @@ const CursosScreen = () => {
     { label: "Media (50-100h)", value: "medium", min: 50, max: 100 },
     { label: "Larga (> 100h)", value: "long", min: 100, max: 999 },
   ];
+
+  const onRefresh = async () => {
+    setIsRefreshing(true);
+    await loadData();
+    setIsRefreshing(false);
+  };
 
   // --- PUNTO 2: REFRESCAR AL GANAR EL FOCO ---
   useFocusEffect(
@@ -138,17 +149,52 @@ const CursosScreen = () => {
   ]);
 
   const renderCourseCard = ({ item }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.card }]}>
       <Image source={{ uri: item.image }} style={styles.image} />
       <View style={styles.infoContainer}>
-        <Text style={styles.courseName}>{item.name}</Text>
-        <Text style={styles.description} numberOfLines={2}>
+        <Text style={[styles.courseName, { color: colors.text }]}>
+          {item.name}
+        </Text>
+        <Text
+          style={[styles.description, { color: colors.subtext }]}
+          numberOfLines={2}
+        >
           {item.description}
         </Text>
         <View style={styles.tagContainer}>
-          <Text style={styles.tag}>📍 {item.city || "Online"}</Text>
-          <Text style={styles.tag}>⏱️ {item.duration}</Text>
-          <Text style={styles.tag}>📊 {item.level}</Text>
+          <Text
+            style={[
+              styles.tag,
+              {
+                backgroundColor: dark ? "#3A3A3C" : "#F0F2F5",
+                color: colors.subtext,
+              },
+            ]}
+          >
+            📍 {item.city || "Online"}
+          </Text>
+          <Text
+            style={[
+              styles.tag,
+              {
+                backgroundColor: dark ? "#3A3A3C" : "#F0F2F5",
+                color: colors.subtext,
+              },
+            ]}
+          >
+            ⏱️ {item.duration}
+          </Text>
+          <Text
+            style={[
+              styles.tag,
+              {
+                backgroundColor: dark ? "#3A3A3C" : "#F0F2F5",
+                color: colors.subtext,
+              },
+            ]}
+          >
+            📊 {item.level}
+          </Text>
         </View>
         <TouchableOpacity
           style={[
@@ -189,17 +235,49 @@ const CursosScreen = () => {
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Centro de Formación</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: colors.card, borderBottomColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.title, { color: colors.text }]}>
+            Centro de Formación
+          </Text>
           <View style={styles.searchRow}>
-            <View style={styles.searchSkeleton} />
-            <View style={styles.filterButtonSkeleton} />
+            <View
+              style={[
+                styles.searchSkeleton,
+                { backgroundColor: dark ? "#3A3A3C" : "#E0E0E0" },
+              ]}
+            />
+            <View
+              style={[
+                styles.filterButtonSkeleton,
+                { backgroundColor: dark ? "#3A3A3C" : "#E0E0E0" },
+              ]}
+            />
           </View>
           <View style={styles.filterTabsSkeleton}>
-            <View style={styles.tabSkeleton} />
-            <View style={styles.tabSkeleton} />
-            <View style={styles.tabSkeleton} />
+            <View
+              style={[
+                styles.tabSkeleton,
+                { backgroundColor: dark ? "#3A3A3C" : "#E0E0E0" },
+              ]}
+            />
+            <View
+              style={[
+                styles.tabSkeleton,
+                { backgroundColor: dark ? "#3A3A3C" : "#E0E0E0" },
+              ]}
+            />
+            <View
+              style={[
+                styles.tabSkeleton,
+                { backgroundColor: dark ? "#3A3A3C" : "#E0E0E0" },
+              ]}
+            />
           </View>
         </View>
         <View style={styles.listPadding}>
@@ -212,29 +290,49 @@ const CursosScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Centro de Formación</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.card, borderBottomColor: colors.border },
+        ]}
+      >
+        <Text style={[styles.title, { color: colors.text }]}>
+          Centro de Formación
+        </Text>
         <View style={styles.searchRow}>
-          <View style={styles.searchBox}>
+          <View
+            style={[
+              styles.searchBox,
+              { backgroundColor: dark ? "#3A3A3C" : "#F0F2F5" },
+            ]}
+          >
             <Ionicons
               name="search"
               size={20}
-              color="#666"
+              color={colors.subtext}
               style={styles.searchIcon}
             />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.text }]}
               placeholder="Buscar cursos..."
+              placeholderTextColor={colors.subtext}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
           </View>
           <TouchableOpacity
-            style={styles.filterButton}
+            style={[
+              styles.filterButton,
+              { backgroundColor: dark ? "#3A3A3C" : "#F0F2F5" },
+            ]}
             onPress={() => setShowFilters(true)}
           >
-            <Ionicons name="options-outline" size={24} color="#004A99" />
+            <Ionicons
+              name="options-outline"
+              size={24}
+              color={dark ? colors.primary : "#004A99"}
+            />
             {activeFiltersCount > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{activeFiltersCount}</Text>
@@ -247,12 +345,17 @@ const CursosScreen = () => {
           {["all", "available", "enrolled"].map((tab) => (
             <TouchableOpacity
               key={tab}
-              style={[styles.tab, currentFilter === tab && styles.activeTab]}
+              style={[
+                styles.tab,
+                currentFilter === tab &&
+                  (styles.activeTab || { backgroundColor: colors.primary }),
+              ]}
               onPress={() => setCurrentFilter(tab)}
             >
               <Text
                 style={[
                   styles.tabText,
+                  { color: colors.subtext },
                   currentFilter === tab && styles.activeTabText,
                 ]}
               >
@@ -270,28 +373,137 @@ const CursosScreen = () => {
       <FlatList
         data={filteredCourses}
         renderItem={renderCourseCard}
-        keyExtractor={(item) => String(item.id)} // Forzar string para el key
+        keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.listPadding}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No se han encontrado cursos.</Text>
+          <Text style={[styles.emptyText, { color: colors.subtext }]}>
+            No se han encontrado cursos.
+          </Text>
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
         }
       />
-
-      {/* Modal de filtros (Mismo código que tenías) */}
       <Modal visible={showFilters} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Filtros avanzados</Text>
-            {/* ... resto del contenido del modal igual ... */}
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              Filtros avanzados
+            </Text>
+            <Text style={[styles.filterLabel, { color: colors.text }]}>
+              Ciudad
+            </Text>
+            <View style={styles.filterOptions}>
+              {cities.map((city) => (
+                <TouchableOpacity
+                  key={city}
+                  style={[
+                    styles.filterChip,
+                    { backgroundColor: dark ? "#3A3A3C" : "#F0F2F5" },
+                    selectedCity === city && styles.filterChipActive,
+                  ]}
+                  onPress={() =>
+                    setSelectedCity(selectedCity === city ? "" : city)
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      { color: colors.subtext },
+                      selectedCity === city && styles.filterChipTextActive,
+                    ]}
+                  >
+                    {city}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={[styles.filterLabel, { color: colors.text }]}>
+              Nivel
+            </Text>
+            <View style={styles.filterOptions}>
+              {levels.map((level) => (
+                <TouchableOpacity
+                  key={level}
+                  style={[
+                    styles.filterChip,
+                    { backgroundColor: dark ? "#3A3A3C" : "#F0F2F5" },
+                    selectedLevel === level && styles.filterChipActive,
+                  ]}
+                  onPress={() =>
+                    setSelectedLevel(selectedLevel === level ? "" : level)
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      { color: colors.subtext },
+                      selectedLevel === level && styles.filterChipTextActive,
+                    ]}
+                  >
+                    {level}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={[styles.filterLabel, { color: colors.text }]}>
+              Duración
+            </Text>
+            <View style={styles.filterOptions}>
+              {durations.map((duration) => (
+                <TouchableOpacity
+                  key={duration.label}
+                  style={[
+                    styles.filterChip,
+                    { backgroundColor: dark ? "#3A3A3C" : "#F0F2F5" },
+                    selectedDuration === duration.value &&
+                      styles.filterChipActive,
+                  ]}
+                  onPress={() =>
+                    setSelectedDuration(
+                      selectedDuration === duration.value ? "" : duration.value,
+                    )
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      { color: colors.subtext },
+                      selectedDuration === duration.value &&
+                        styles.filterChipTextActive,
+                    ]}
+                  >
+                    {duration.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={styles.clearButton}
+                style={[
+                  styles.clearButton,
+                  { backgroundColor: dark ? "#3A3A3C" : "#F0F2F5" },
+                ]}
                 onPress={limpiarFiltros}
               >
-                <Text style={styles.clearButtonText}>Limpiar todo</Text>
+                <Text
+                  style={[styles.clearButtonText, { color: colors.subtext }]}
+                >
+                  Limpiar todo
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.applyButton}
+                style={[
+                  styles.applyButton,
+                  { backgroundColor: colors.primary },
+                ]}
                 onPress={aplicarFiltros}
               >
                 <Text style={styles.applyButtonText}>Aplicar</Text>
@@ -343,7 +555,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    position: "relative", // ← NUEVO para posicionar el badge
+    position: "relative",
   },
   badge: {
     position: "absolute",
@@ -398,7 +610,6 @@ const styles = StyleSheet.create({
   buttonText: { color: "white", fontWeight: "bold" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   emptyText: { textAlign: "center", marginTop: 50, color: "#999" },
-  // Estilos del modal
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -475,7 +686,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "600",
   },
-  // Estilos para skeletons
   searchSkeleton: {
     flex: 1,
     height: 45,

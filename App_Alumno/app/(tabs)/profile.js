@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -30,6 +31,7 @@ export default function ProfileScreen() {
   const {
     data: student,
     isLoading,
+    isFetching,
     refetch,
   } = useStudent(user?.dni || "Z1368407G");
 
@@ -126,7 +128,17 @@ export default function ProfileScreen() {
         <Ionicons name="settings-outline" size={26} color={colors.primary} />
       </TouchableOpacity>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={isFetching}
+            onRefresh={refetch}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+        contentContainerStyle={{ paddingBottom: 60 }}
+      >
         {/* CABECERA */}
         <View
           style={[
