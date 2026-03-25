@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -12,12 +13,26 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useStudent } from "../../hooks/useStudent";
+import { getAvisos } from "../../services/avisoService";
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { data: student, isLoading, isError } = useStudent(user?.dni);
   const { colors, dark } = useTheme();
+  const [avisosNoLeidos, setAvisosNoLeidos] = useState(0);
+
+  // Cargar contador de avisos no leídos cada vez que la pantalla recibe foco
+  useFocusEffect(
+    useCallback(() => {
+      const cargarContadorAvisos = async () => {
+        const avisos = await getAvisos();
+        const noLeidos = avisos.filter(a => !a.leido).length;
+        setAvisosNoLeidos(noLeidos);
+      };
+      cargarContadorAvisos();
+    }, [])
+  );
 
   const menuItems = [
     {
@@ -53,7 +68,8 @@ export default function HomeScreen() {
       title: "Avisos",
       icon: "notifications",
       color: "#FF3B30",
-      route: "/notifications",
+      route: "/(tabs)/avisos",
+      badge: avisosNoLeidos,
     },
     {
       id: 6,
@@ -73,28 +89,23 @@ export default function HomeScreen() {
 
   if (isLoading) {
     return (
-      <View
-        style={[
-          styles.container,
-          { justifyContent: "center", backgroundColor: colors.background },
-        ]}
-      >
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <ActivityIndicator size="large" color="#004A99" />
       </View>
     );
   }
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={[styles.welcomeText, { color: colors.text }]}>
             ¡Hola de nuevo,{" "}
-            {(student?.nombrePila || user?.first_name || "Alumno")
-              .toLowerCase()
-              .replace(/^\w/, (c) => c.toUpperCase())}
+            {
+              (student?.nombrePila || user?.first_name || "Alumno")
+                .toLowerCase()
+                .replace(/^\w/, (c) => c.toUpperCase())
+            }
             !
           </Text>
           <Text style={[styles.subtitleText, { color: colors.subtext }]}>
@@ -113,6 +124,13 @@ export default function HomeScreen() {
                 style={[styles.iconContainer, { backgroundColor: item.color }]}
               >
                 <Ionicons name={item.icon} size={30} color="#FFF" />
+                {item.badge > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </Text>
+                  </View>
+                )}
               </View>
               <Text style={[styles.cardTitle, { color: colors.text }]}>
                 {item.title}
@@ -121,15 +139,8 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <View
-          style={[
-            styles.infoBox,
-            { backgroundColor: colors.card, borderLeftColor: colors.primary },
-          ]}
-        >
-          <Text style={[styles.infoTitle, { color: colors.subtext }]}>
-            Estado de cuenta
-          </Text>
+        <View style={[styles.infoBox, { backgroundColor: colors.card, borderLeftColor: colors.primary }]}>
+          <Text style={[styles.infoTitle, { color: colors.subtext }]}>Estado de cuenta</Text>
           <Text style={[styles.infoText, { color: colors.text }]}>
             {student?.enrollments?.length > 0
               ? `Tienes ${student.enrollments.length} curso(s) activo(s)`
@@ -188,6 +199,24 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 12,
+    position: "relative",
+  },
+  badge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "#FF3B30",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
   },
   cardTitle: {
     fontSize: 14,

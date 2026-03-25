@@ -12,14 +12,15 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext"; // Importante
+import { useTheme } from "../context/ThemeContext";
 import { sendLocalNotification } from "../services/notificationService";
 import { enrollInCourse, unenrollFromCourse } from "../services/studentService";
+import { guardarAviso } from "../services/avisoService";
 
 const CourseDetailScreen = () => {
   const router = useRouter();
   const { user } = useAuth();
-  const { colors, dark } = useTheme(); // Usamos tu contexto
+  const { colors, dark } = useTheme();
 
   const {
     courseId,
@@ -55,10 +56,15 @@ const CourseDetailScreen = () => {
                 const success = await unenrollFromCourse(user.dni, courseId);
                 if (success) {
                   setIsEnrolled(false);
+                  await guardarAviso(
+                    'Baja confirmada',
+                    `Te has dado de baja de ${courseName}`,
+                    'warning'
+                  );
                   await sendLocalNotification(
-                    "Baja confirmada",
-                    `Te has dado de baja de ${courseName}.`,
-                    { courseId },
+                    'Baja confirmada',
+                    `Te has dado de baja de ${courseName}`,
+                    { courseId }
                   );
                 }
               },
@@ -72,10 +78,15 @@ const CourseDetailScreen = () => {
         });
         if (success) {
           setIsEnrolled(true);
+          await guardarAviso(
+            'Inscripción exitosa',
+            `Te has inscrito en ${courseName}`,
+            'success'
+          );
           await sendLocalNotification(
-            "¡Inscripción exitosa!",
-            `Te has inscrito en ${courseName}.`,
-            { courseId },
+            '¡Inscripción exitosa!',
+            `Te has inscrito en ${courseName}`,
+            { courseId }
           );
           Alert.alert("¡Hecho!", "Te has inscrito correctamente.");
         }
@@ -90,7 +101,6 @@ const CourseDetailScreen = () => {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* IMAGEN DE CABECERA */}
         <View style={styles.imageContainer}>
           <Image source={{ uri: courseImage }} style={styles.image} />
           <TouchableOpacity
@@ -106,115 +116,57 @@ const CourseDetailScreen = () => {
             {courseName || "Cargando curso..."}
           </Text>
 
-          {/* BADGES DE INFO RÁPIDA */}
           <View style={styles.infoRow}>
-            <View
-              style={[
-                styles.infoBadge,
-                { backgroundColor: dark ? "#2C2C2E" : "#E8F0FE" },
-              ]}
-            >
+            <View style={[styles.infoBadge, { backgroundColor: dark ? "#2C2C2E" : "#E8F0FE" }]}>
               <Ionicons name="time-outline" size={16} color={colors.primary} />
               <Text style={[styles.infoText, { color: colors.primary }]}>
                 {courseDuration || "N/A"}
               </Text>
             </View>
-            <View
-              style={[
-                styles.infoBadge,
-                { backgroundColor: dark ? "#2C2C2E" : "#E8F0FE" },
-              ]}
-            >
-              <Ionicons
-                name="bar-chart-outline"
-                size={16}
-                color={colors.primary}
-              />
+            <View style={[styles.infoBadge, { backgroundColor: dark ? "#2C2C2E" : "#E8F0FE" }]}>
+              <Ionicons name="bar-chart-outline" size={16} color={colors.primary} />
               <Text style={[styles.infoText, { color: colors.primary }]}>
                 {courseLevel || "General"}
               </Text>
             </View>
           </View>
 
-          {/* SECCIÓN: DESCRIPCIÓN */}
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Descripción del curso
-          </Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Descripción del curso</Text>
           <Text style={[styles.descriptionText, { color: colors.subtext }]}>
-            {courseDescription ||
-              "No hay descripción disponible para este curso."}
+            {courseDescription || "No hay descripción disponible para este curso."}
           </Text>
 
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-          {/* SECCIÓN: TEMARIO */}
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Temario del curso
-          </Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Temario del curso</Text>
           <View style={styles.listContainer}>
-            {[
-              "Introducción y conceptos clave",
-              "Herramientas y metodología",
-              "Casos prácticos reales",
-              "Evaluación final",
-            ].map((item, index) => (
+            {["Introducción y conceptos clave", "Herramientas y metodología", "Casos prácticos reales", "Evaluación final"].map((item, index) => (
               <View key={index} style={styles.listItem}>
-                <Text
-                  style={[
-                    styles.listNumber,
-                    { backgroundColor: colors.primary },
-                  ]}
-                >
-                  {index + 1}
-                </Text>
-                <Text style={[styles.listText, { color: colors.text }]}>
-                  {item}
-                </Text>
+                <Text style={[styles.listNumber, { backgroundColor: colors.primary }]}>{index + 1}</Text>
+                <Text style={[styles.listText, { color: colors.text }]}>{item}</Text>
               </View>
             ))}
           </View>
 
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-          {/* SECCIÓN: REQUISITOS */}
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Requisitos
-          </Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Requisitos</Text>
           <View style={styles.requirementItem}>
             <Ionicons name="checkmark-done" size={20} color="#34C759" />
-            <Text style={[styles.requirementText, { color: colors.subtext }]}>
-              Conocimientos básicos del área.
-            </Text>
+            <Text style={[styles.requirementText, { color: colors.subtext }]}>Conocimientos básicos del área.</Text>
           </View>
           <View style={styles.requirementItem}>
             <Ionicons name="checkmark-done" size={20} color="#34C759" />
-            <Text style={[styles.requirementText, { color: colors.subtext }]}>
-              Conexión a internet estable.
-            </Text>
+            <Text style={[styles.requirementText, { color: colors.subtext }]}>Conexión a internet estable.</Text>
           </View>
 
           <View style={{ height: 120 }} />
         </View>
       </ScrollView>
 
-      {/* BOTÓN FLOTANTE INFERIOR */}
-      <View
-        style={[
-          styles.footer,
-          {
-            backgroundColor: colors.card,
-            borderTopColor: colors.border,
-            paddingBottom: 30, // Espacio extra para notch
-          },
-        ]}
-      >
+      <View style={[styles.footer, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
         <TouchableOpacity
-          style={[
-            styles.mainButton,
-            isEnrolled
-              ? styles.buttonUnenroll
-              : { backgroundColor: colors.primary },
-          ]}
+          style={[styles.mainButton, isEnrolled ? styles.buttonUnenroll : { backgroundColor: colors.primary }]}
           onPress={handleEnrollmentToggle}
           disabled={loading}
         >
@@ -222,14 +174,8 @@ const CourseDetailScreen = () => {
             <ActivityIndicator color="white" />
           ) : (
             <>
-              <Ionicons
-                name={isEnrolled ? "close-circle" : "add-circle"}
-                size={24}
-                color="white"
-              />
-              <Text style={styles.buttonText}>
-                {isEnrolled ? "Anular Inscripción" : "Inscribirme Ahora"}
-              </Text>
+              <Ionicons name={isEnrolled ? "close-circle" : "add-circle"} size={24} color="white" />
+              <Text style={styles.buttonText}>{isEnrolled ? "Anular Inscripción" : "Inscribirme Ahora"}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -253,53 +199,19 @@ const styles = StyleSheet.create({
   content: { padding: 20 },
   title: { fontSize: 24, fontWeight: "800", marginBottom: 12 },
   infoRow: { flexDirection: "row", gap: 12, marginBottom: 25 },
-  infoBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
-  },
+  infoBadge: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, gap: 6 },
   infoText: { fontWeight: "700", fontSize: 13 },
   sectionTitle: { fontSize: 18, fontWeight: "700", marginBottom: 10 },
   descriptionText: { fontSize: 15, lineHeight: 22, marginBottom: 10 },
   divider: { height: 1, marginVertical: 20 },
   listContainer: { gap: 12 },
   listItem: { flexDirection: "row", alignItems: "center", gap: 12 },
-  listNumber: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    color: "white",
-    textAlign: "center",
-    lineHeight: 24,
-    fontSize: 12,
-    fontWeight: "bold",
-  },
+  listNumber: { width: 24, height: 24, borderRadius: 12, color: "white", textAlign: "center", lineHeight: 24, fontSize: 12, fontWeight: "bold" },
   listText: { fontSize: 15 },
-  requirementItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
-  },
+  requirementItem: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
   requirementText: { fontSize: 14 },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
-    padding: 20,
-    borderTopWidth: 1,
-  },
-  mainButton: {
-    flexDirection: "row",
-    padding: 18,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-  },
+  footer: { position: "absolute", bottom: 0, width: "100%", padding: 20, borderTopWidth: 1, paddingBottom: 30 },
+  mainButton: { flexDirection: "row", padding: 18, borderRadius: 15, alignItems: "center", justifyContent: "center", gap: 10 },
   buttonUnenroll: { backgroundColor: "#FF3B30" },
   buttonText: { color: "white", fontSize: 16, fontWeight: "bold" },
 });
