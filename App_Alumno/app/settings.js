@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Linking,
@@ -13,13 +14,48 @@ import {
   View,
 } from "react-native";
 import { useTheme } from "../context/ThemeContext";
+import * as NotificationService from "../services/notificationService";
+
+const NOTIFICATIONS_KEY = "@user_notifications_enabled";
 
 export default function SettingsScreen() {
   const { dark, toggleTheme, colors } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
-  const toggleNotifications = () => {
-    setNotificationsEnabled((previousState) => !previousState);
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const savedValue = await AsyncStorage.getItem(NOTIFICATIONS_KEY);
+        if (savedValue !== null) {
+          setNotificationsEnabled(JSON.parse(savedValue));
+        }
+      } catch (e) {
+        console.log("Error cargando ajustes", e);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  const toggleNotifications = async (value) => {
+    if (value) {
+      const granted = await NotificationService.requestPermissions();
+      if (granted) {
+        setNotificationsEnabled(true);
+        await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(true));
+        //Enviamos una notificación de prueba
+        await NotificationService.sendLocalNotification(
+          "¡Notificaciones activadas!",
+          "Te avisaremos de tus próximos cursos.",
+        );
+      } else {
+        setNotificationsEnabled(false);
+        await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(false));
+      }
+    } else {
+      setNotificationsEnabled(false);
+      await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(false));
+      await NotificationService.cancelAllNotifications();
+    }
   };
 
   return (
