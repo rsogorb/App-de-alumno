@@ -9,10 +9,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../../context/ThemeContext";
 import { eliminarAviso, eliminarTodosAvisos, getAvisos, marcarComoLeido } from "../../services/avisoService";
 
 export default function AvisosScreen() {
   const router = useRouter();
+  const { colors, dark } = useTheme();
   const [avisos, setAvisos] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -105,7 +107,10 @@ export default function AvisosScreen() {
 
   const renderAviso = ({ item }) => (
     <TouchableOpacity
-      style={[styles.avisoCard, item.leido && styles.avisoLeido]}
+      style={[
+        styles.avisoCard, 
+        { backgroundColor: colors.card }, item.leido && {opacity: 0.7, backgroundColor: dark ? "#2C2C2E" : "#fAFAFA"}
+      ]}
       onPress={() => handleAvisoPress(item)}
       onLongPress={() => handleEliminarAviso(item.id)}
       activeOpacity={0.7}
@@ -125,13 +130,13 @@ export default function AvisosScreen() {
           })}
         </Text>
       </View>
-      {!item.leido && <View style={styles.puntoNoLeido} />}
+      {!item.leido && <View style={[styles.puntoNoLeido, { backgroundColor: colors.primary }]} />}
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border}]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#004A99" />
         </TouchableOpacity>

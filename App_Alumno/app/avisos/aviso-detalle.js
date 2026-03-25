@@ -8,10 +8,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../../context/ThemeContext";
 import { marcarComoLeido } from "../../services/avisoService";
 
 export default function AvisoDetalleScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { aviso } = useLocalSearchParams();
   const avisoData = JSON.parse(aviso);
 
@@ -38,7 +40,7 @@ export default function AvisoDetalleScreen() {
       case 'success': return '#34C759';
       case 'warning': return '#FF9500';
       case 'error': return '#FF3B30';
-      default: return '#007AFF';
+      default: return colors.primary;
     }
   };
 
@@ -51,12 +53,12 @@ export default function AvisoDetalleScreen() {
   });
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border}]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.replace(`/(tabs)/avisos`)}>
           <Ionicons name="arrow-back" size={24} color="#004A99" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detalle del aviso</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Detalle del aviso</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -65,12 +67,12 @@ export default function AvisoDetalleScreen() {
           <Ionicons name={getIconoPorTipo(avisoData.tipo)} size={48} color={getColorPorTipo(avisoData.tipo)} />
         </View>
 
-        <Text style={styles.titulo}>{avisoData.titulo}</Text>
-        <Text style={styles.fecha}>{fechaFormateada}</Text>
+        <Text style={[styles.titulo, { color: colors.text }]}>{avisoData.titulo}</Text>
+        <Text style={[styles.fecha, { color: colors.subtext }]}>{fechaFormateada}</Text>
         
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
         
-        <Text style={styles.mensaje}>{avisoData.mensaje}</Text>
+        <Text style={[styles.mensaje, { color: colors.text }]}>{avisoData.mensaje}</Text>
       </ScrollView>
     </View>
   );
