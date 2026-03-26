@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -27,11 +27,11 @@ export default function HomeScreen() {
     useCallback(() => {
       const cargarContadorAvisos = async () => {
         const avisos = await getAvisos();
-        const noLeidos = avisos.filter(a => !a.leido).length;
+        const noLeidos = avisos.filter((a) => !a.leido).length;
         setAvisosNoLeidos(noLeidos);
       };
       cargarContadorAvisos();
-    }, [])
+    }, []),
   );
 
   const menuItems = [
@@ -96,16 +96,18 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={[styles.welcomeText, { color: colors.text }]}>
-            ¡Hola de nuevo,{" "}
-            {
-              (student?.nombrePila || user?.first_name || "Alumno")
-                .toLowerCase()
-                .replace(/^\w/, (c) => c.toUpperCase())
-            }
+            ¡Hola de nuevo,
+            {(student?.nombrePila || user?.first_name || "Alumno")
+              .toLowerCase()
+              .split(" ")
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(" ")}
             !
           </Text>
           <Text style={[styles.subtitleText, { color: colors.subtext }]}>
@@ -127,7 +129,7 @@ export default function HomeScreen() {
                 {item.badge > 0 && (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>
-                      {item.badge > 99 ? '99+' : item.badge}
+                      {item.badge > 99 ? "99+" : item.badge}
                     </Text>
                   </View>
                 )}
@@ -139,8 +141,15 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <View style={[styles.infoBox, { backgroundColor: colors.card, borderLeftColor: colors.primary }]}>
-          <Text style={[styles.infoTitle, { color: colors.subtext }]}>Estado de cuenta</Text>
+        <View
+          style={[
+            styles.infoBox,
+            { backgroundColor: colors.card, borderLeftColor: colors.primary },
+          ]}
+        >
+          <Text style={[styles.infoTitle, { color: colors.subtext }]}>
+            Estado de cuenta
+          </Text>
           <Text style={[styles.infoText, { color: colors.text }]}>
             {student?.enrollments?.length > 0
               ? `Tienes ${student.enrollments.length} curso(s) activo(s)`

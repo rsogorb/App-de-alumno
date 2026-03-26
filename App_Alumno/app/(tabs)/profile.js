@@ -33,7 +33,7 @@ export default function ProfileScreen() {
     isLoading,
     isFetching,
     refetch,
-  } = useStudent(user?.dni || "Z1368407G");
+  } = useStudent(user?.dni || "Z3948428T");
 
   const [uploading, setUploading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -50,11 +50,11 @@ export default function ProfileScreen() {
   useEffect(() => {
     if (student) {
       setFormData({
-        student_mobile_number: student.telefono,
-        gender: student.genero,
-        nationality: student.nacionalidad,
-        date_of_birth: student.fechaNacimiento,
-        student_email_id: student.correoElectronico,
+        telefono: student.telefono,
+        genero: student.genero,
+        nacionalidad: student.nacionalidad,
+        fechaNacimiento: student.fechaNacimiento,
+        correoElectronico: student.correoElectronico,
       });
     }
   }, [student]);
@@ -226,21 +226,19 @@ export default function ProfileScreen() {
         <View style={[styles.card, { backgroundColor: colors.card }]}>
           <EditableRow
             label="Email"
-            value={formData.student_email_id}
+            value={formData.correoElectronico}
             isEditing={isEditing}
             onChange={(val) =>
-              setFormData({ ...formData, student_email_id: val })
+              setFormData({ ...formData, correoElectronico: val })
             }
             icon="✉️"
             colors={colors}
           />
           <EditableRow
             label="Teléfono"
-            value={formData.student_mobile_number}
+            value={formData.telefono}
             isEditing={isEditing}
-            onChange={(val) =>
-              setFormData({ ...formData, student_mobile_number: val })
-            }
+            onChange={(val) => setFormData({ ...formData, telefono: val })}
             icon="📱"
             colors={colors}
             last

@@ -26,25 +26,20 @@ export default function LoginScreen() {
     const PASS_TEST = "1234";
 
     if (email.toLowerCase() === USUARIO_TEST && password === PASS_TEST) {
-      const studentData = mockStudents.find((s) => s.dni === "Z1368407G");
+      const DNI_A_BUSCAR = "Z3948428T";
+
+      const studentData = mockStudents.find((s) => s.dni === DNI_A_BUSCAR);
 
       if (studentData) {
         await login(studentData);
-
         console.log("¡Acceso concedido para:", studentData.first_name);
-
         router.replace("/(tabs)");
       } else {
-        Alert.alert(
-          "Error",
-          "No se encontraron datos para este alumno en los mocks.",
-        );
+        await login({ dni: DNI_A_BUSCAR, first_name: "Jhonatan" });
+        router.replace("/(tabs)");
       }
     } else {
-      Alert.alert(
-        "Acceso Denegado",
-        "Usuario o contraseña incorrectos.\n\nPrueba con:\nalumno@atu.com / 1234",
-      );
+      Alert.alert("Acceso Denegado", "Usuario o contraseña incorrectos.");
     }
   };
 
