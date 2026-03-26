@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -10,7 +10,11 @@ import {
   View,
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
-import { eliminarAviso, eliminarTodosAvisos, getAvisos, marcarComoLeido } from "../../services/avisoService";
+import {
+  eliminarAviso,
+  eliminarTodosAvisos,
+  getAvisos,
+} from "../../services/avisoService";
 
 export default function AvisosScreen() {
   const router = useRouter();
@@ -21,7 +25,7 @@ export default function AvisosScreen() {
   useFocusEffect(
     useCallback(() => {
       cargarAvisos();
-    }, [])
+    }, []),
   );
 
   const cargarAvisos = async () => {
@@ -38,111 +42,141 @@ export default function AvisosScreen() {
   const handleAvisoPress = (aviso) => {
     router.push({
       pathname: "/avisos/aviso-detalle",
-      params: { aviso: JSON.stringify(aviso) }
+      params: { aviso: JSON.stringify(aviso) },
     });
   };
 
   const handleEliminarAviso = async (id) => {
-    Alert.alert(
-      "Eliminar aviso",
-      "¿Quieres eliminar este aviso?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            await eliminarAviso(id);
-            await cargarAvisos();
-          },
+    Alert.alert("Eliminar aviso", "¿Quieres eliminar este aviso?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Eliminar",
+        style: "destructive",
+        onPress: async () => {
+          await eliminarAviso(id);
+          await cargarAvisos();
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleEliminarTodos = async () => {
     if (avisos.length === 0) return;
-    Alert.alert(
-      "Eliminar todos",
-      "¿Quieres eliminar todos los avisos?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar todos",
-          style: "destructive",
-          onPress: async () => {
-            await eliminarTodosAvisos();
-            await cargarAvisos();
-          },
+    Alert.alert("Eliminar todos", "¿Quieres eliminar todos los avisos?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Eliminar todos",
+        style: "destructive",
+        onPress: async () => {
+          await eliminarTodosAvisos();
+          await cargarAvisos();
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const getIconoPorTipo = (tipo) => {
     switch (tipo) {
-      case 'success':
-        return 'checkmark-circle';
-      case 'warning':
-        return 'warning';
-      case 'error':
-        return 'alert-circle';
+      case "success":
+        return "checkmark-circle";
+      case "warning":
+        return "warning";
+      case "error":
+        return "alert-circle";
       default:
-        return 'information-circle';
+        return "information-circle";
     }
   };
 
   const getColorPorTipo = (tipo) => {
     switch (tipo) {
-      case 'success':
-        return '#34C759';
-      case 'warning':
-        return '#FF9500';
-      case 'error':
-        return '#FF3B30';
+      case "success":
+        return "#34C759";
+      case "warning":
+        return "#FF9500";
+      case "error":
+        return "#FF3B30";
       default:
-        return '#007AFF';
+        return "#007AFF";
     }
   };
 
   const renderAviso = ({ item }) => (
     <TouchableOpacity
       style={[
-        styles.avisoCard, 
-        { backgroundColor: colors.card }, item.leido && {opacity: 0.7, backgroundColor: dark ? "#2C2C2E" : "#fAFAFA"}
+        styles.avisoCard,
+        { backgroundColor: colors.card },
+        item.leido && {
+          opacity: 0.7,
+          backgroundColor: dark ? "#2C2C2E" : "#fAFAFA",
+        },
       ]}
       onPress={() => handleAvisoPress(item)}
       onLongPress={() => handleEliminarAviso(item.id)}
       activeOpacity={0.7}
     >
-      <View style={[styles.avisoIcone, { backgroundColor: getColorPorTipo(item.tipo) + '20' }]}>
-        <Ionicons name={getIconoPorTipo(item.tipo)} size={24} color={getColorPorTipo(item.tipo)} />
+      <View
+        style={[
+          styles.avisoIcone,
+          { backgroundColor: getColorPorTipo(item.tipo) + "20" },
+        ]}
+      >
+        <Ionicons
+          name={getIconoPorTipo(item.tipo)}
+          size={24}
+          color={getColorPorTipo(item.tipo)}
+        />
       </View>
       <View style={styles.avisoContent}>
-        <Text style={styles.avisoTitulo}>{item.titulo}</Text>
-        <Text style={styles.avisoMensaje}>{item.mensaje}</Text>
-        <Text style={styles.avisoFecha}>
-          {new Date(item.fecha).toLocaleString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
+        <Text style={[styles.avisoTitulo, { color: colors.text }]}>
+          {item.titulo}
+        </Text>
+        <Text style={[styles.avisoMensaje, { color: colors.subtext }]}>
+          {item.mensaje}
+        </Text>
+        <Text
+          style={[styles.avisoFecha, { color: colors.subtext, opacity: 0.8 }]}
+        >
+          {new Date(item.fecha).toLocaleString("es-ES", {
+            day: "2-digit",
+            month: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
           })}
         </Text>
       </View>
-      {!item.leido && <View style={[styles.puntoNoLeido, { backgroundColor: colors.primary }]} />}
+      {!item.leido && (
+        <View
+          style={[styles.puntoNoLeido, { backgroundColor: colors.primary }]}
+        />
+      )}
     </TouchableOpacity>
   );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border}]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#004A99" />
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.card, borderBottomColor: colors.border },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color={dark ? colors.primary : "#004A99"}
+          />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Avisos</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Avisos</Text>
         {avisos.length > 0 && (
-          <TouchableOpacity style={styles.deleteButton} onPress={handleEliminarTodos}>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handleEliminarTodos}
+          >
             <Ionicons name="trash-outline" size={22} color="#FF3B30" />
           </TouchableOpacity>
         )}
@@ -158,9 +192,20 @@ export default function AvisosScreen() {
         onRefresh={handleRefresh}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="notifications-outline" size={64} color="#C0C0C0" />
-            <Text style={styles.emptyText}>No hay avisos</Text>
-            <Text style={styles.emptySubtext}>
+            <Ionicons
+              name="notifications-outline"
+              size={64}
+              color={dark ? "#48484A" : "#C0C0C0"}
+            />
+            <Text style={[styles.emptyText, { color: colors.subtext }]}>
+              No hay avisos
+            </Text>
+            <Text
+              style={[
+                styles.emptySubtext,
+                { color: colors.subtext, opacity: 0.7 },
+              ]}
+            >
               Cuando te inscribas o anules cursos, los avisos aparecerán aquí
             </Text>
           </View>

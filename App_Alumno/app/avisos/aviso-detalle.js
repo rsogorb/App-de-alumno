@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -23,56 +23,89 @@ export default function AvisoDetalleScreen() {
       if (!avisoData.leido) {
         marcarComoLeido(avisoData.id);
       }
-    }, [avisoData.id, avisoData.leido])
+    }, [avisoData.id, avisoData.leido]),
   );
 
   const getIconoPorTipo = (tipo) => {
     switch (tipo) {
-      case 'success': return 'checkmark-circle';
-      case 'warning': return 'warning';
-      case 'error': return 'alert-circle';
-      default: return 'information-circle';
+      case "success":
+        return "checkmark-circle";
+      case "warning":
+        return "warning";
+      case "error":
+        return "alert-circle";
+      default:
+        return "information-circle";
     }
   };
 
   const getColorPorTipo = (tipo) => {
     switch (tipo) {
-      case 'success': return '#34C759';
-      case 'warning': return '#FF9500';
-      case 'error': return '#FF3B30';
-      default: return colors.primary;
+      case "success":
+        return "#34C759";
+      case "warning":
+        return "#FF9500";
+      case "error":
+        return "#FF3B30";
+      default:
+        return colors.primary;
     }
   };
 
-  const fechaFormateada = new Date(avisoData.fecha).toLocaleString('es-ES', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  const fechaFormateada = new Date(avisoData.fecha).toLocaleString("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border}]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.replace(`/(tabs)/avisos`)}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.card, borderBottomColor: colors.border },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.replace(`/(tabs)/avisos`)}
+        >
           <Ionicons name="arrow-back" size={24} color="#004A99" />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Detalle del aviso</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          Detalle del aviso
+        </Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={[styles.iconContainer, { backgroundColor: getColorPorTipo(avisoData.tipo) + '20' }]}>
-          <Ionicons name={getIconoPorTipo(avisoData.tipo)} size={48} color={getColorPorTipo(avisoData.tipo)} />
+        <View
+          style={[
+            styles.iconContainer,
+            { backgroundColor: getColorPorTipo(avisoData.tipo) + "20" },
+          ]}
+        >
+          <Ionicons
+            name={getIconoPorTipo(avisoData.tipo)}
+            size={48}
+            color={getColorPorTipo(avisoData.tipo)}
+          />
         </View>
 
-        <Text style={[styles.titulo, { color: colors.text }]}>{avisoData.titulo}</Text>
-        <Text style={[styles.fecha, { color: colors.subtext }]}>{fechaFormateada}</Text>
-        
+        <Text style={[styles.titulo, { color: colors.text }]}>
+          {avisoData.titulo}
+        </Text>
+        <Text style={[styles.fecha, { color: colors.subtext }]}>
+          {fechaFormateada}
+        </Text>
+
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        
-        <Text style={[styles.mensaje, { color: colors.text }]}>{avisoData.mensaje}</Text>
+
+        <Text style={[styles.mensaje, { color: colors.text }]}>
+          {avisoData.mensaje}
+        </Text>
       </ScrollView>
     </View>
   );
