@@ -17,6 +17,7 @@ export const getStudentProfile = async (dni) => {
         return {
           id: data.name,
           dni: data.dni,
+          applicantId: data.student_applicant,
           nombrePila: data.first_name,
           apellido: data.last_name,
           nombreCompleto: data.full_name || data.student_name,
@@ -37,7 +38,6 @@ export const getStudentProfile = async (dni) => {
         "Error llamando a la API, intentando fallback local:",
         error.message,
       );
-      // Solo si falla la API intentamos el mock como respaldo "offline"
     }
   }
 
@@ -174,4 +174,43 @@ export const unenrollFromCourse = async (dni, courseId) => {
     }
   }
   return true;
+};
+
+export const getStudentDocuments = async (dni, applicantId) => {
+  try {
+    const possibleNames = [dni];
+    if (applicantId) possibleNames.push(applicantId);
+
+    const filters = JSON.stringify([
+      ["attached_to_name", "in", possibleNames],
+      ["attached_to_doctype", "in", ["Student", "Student Applicant"]],
+    ]);
+
+    const fields = JSON.stringify([
+      "name",
+      "file_name",
+      "file_url",
+      "file_size",
+      "file_type",
+      "creation",
+    ]);
+
+    const res = await client.get(
+      `api/resource/File?filters=${filters}&fields=${fields}`,
+    );
+
+    return res.data.data.map((file) => ({
+      id: file.name,
+      name: file.file_name,
+      url: file.file_url.startsWith("http")
+        ? file.file_url
+        : `https://erppreprod.grupoatu.com${file.file_url}`,
+      size: file.file_size ? (file.file_size / 1024).toFixed(1) + " KB" : "S/D",
+      type: file.file_type || file.file_name.split(".").pop().toUpperCase(),
+      date: file.creation ? file.creation.split(" ")[0] : "",
+    }));
+  } catch (error) {
+    console.error("Error en getStudentDocuments:", error);
+    return [];
+  }
 };

@@ -26,16 +26,27 @@ export default function LoginScreen() {
     const PASS_TEST = "1234";
 
     if (email.toLowerCase() === USUARIO_TEST && password === PASS_TEST) {
-      const DNI_A_BUSCAR = "Z3948428T";
+      const DNI_A_BUSCAR = "71750101Z";
 
       const studentData = mockStudents.find((s) => s.dni === DNI_A_BUSCAR);
 
       if (studentData) {
-        await login(studentData);
-        console.log("¡Acceso concedido para:", studentData.first_name);
+        await login({
+          ...studentData,
+          applicantId: "EDU-APP-2025-13819",
+        });
         router.replace("/(tabs)");
       } else {
-        await login({ dni: DNI_A_BUSCAR, first_name: "Jhonatan" });
+        console.log("Usando datos reales de Jennifer");
+        await login({
+          dni: "71750101Z",
+          first_name: "JENNIFER DAYANARA",
+          last_name: "NOBOA MONAR",
+          nombrePila: "Jennifer Dayanara",
+          applicantId: "EDU-APP-2025-13819",
+          email: "jenniferdayanara@gmail.com",
+          enrollments: [{}, {}],
+        });
         router.replace("/(tabs)");
       }
     } else {

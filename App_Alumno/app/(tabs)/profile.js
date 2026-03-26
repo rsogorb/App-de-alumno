@@ -33,7 +33,7 @@ export default function ProfileScreen() {
     isLoading,
     isFetching,
     refetch,
-  } = useStudent(user?.dni || "Z3948428T");
+  } = useStudent(user?.dni || "71750101Z");
 
   const [uploading, setUploading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);

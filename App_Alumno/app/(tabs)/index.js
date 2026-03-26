@@ -102,7 +102,7 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={[styles.welcomeText, { color: colors.text }]}>
-            ¡Hola de nuevo,
+            ¡Hola de nuevo,{" "}
             {(student?.nombrePila || user?.first_name || "Alumno")
               .toLowerCase()
               .split(" ")
