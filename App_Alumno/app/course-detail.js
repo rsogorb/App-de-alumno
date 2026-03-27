@@ -29,7 +29,13 @@ const CourseDetailScreen = () => {
     courseDuration,
     courseLevel,
     courseImage,
-    isEnrolled: initialIsEnrolled,
+    courseCenter,
+    courseProvince,
+    courseFamily,
+    courseArea,
+    courseStartDate,
+    courseEndDate,
+  isEnrolled: initialIsEnrolled
   } = useLocalSearchParams();
 
   const [isEnrolled, setIsEnrolled] = useState(initialIsEnrolled === "true");
@@ -130,6 +136,57 @@ const CourseDetailScreen = () => {
               </Text>
             </View>
           </View>
+
+          <View style={styles.infoRow}>
+            <View style={[styles.infoBadge, { backgroundColor: dark ? "#2C2C2E" : "#E8F0FE" }]}>
+              <Ionicons name="business-outline" size={16} color={colors.primary} />
+              <Text style={[styles.infoText, { color: colors.primary }]}>
+                {courseCenter || "Centro no especificado"}
+              </Text>
+            </View>
+            <View style={[styles.infoBadge, { backgroundColor: dark ? "#2C2C2E" : "#E8F0FE" }]}>
+              <Ionicons name="location-outline" size={16} color={colors.primary} />
+              <Text style={[styles.infoText, { color: colors.primary }]}>
+                {courseProvince || "Provincia no especificada"}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.infoRow}>
+            <View style={[styles.infoBadge, { backgroundColor: dark ? "#2C2C2E" : "#E8F0FE" }]}>
+              <Ionicons name="book-outline" size={16} color={colors.primary} />
+              <Text style={[styles.infoText, { color: colors.primary }]}>
+                {courseFamily || "Familia no especificada"}
+              </Text>
+            </View>
+            <View style={[styles.infoBadge, { backgroundColor: dark ? "#2C2C2E" : "#E8F0FE" }]}>
+              <Ionicons name="briefcase-outline" size={16} color={colors.primary} />
+              <Text style={[styles.infoText, { color: colors.primary }]}>
+                {courseArea || "Área no especificada"}
+              </Text>
+            </View>
+          </View>
+
+          {(courseStartDate || courseEndDate) && (
+            <View style={[styles.infoRow, { marginBottom: 20 }]}>
+              {courseStartDate && (
+                <View style={[styles.infoBadge, { backgroundColor: dark ? "#2C2C2E" : "#E8F0FE" }]}>
+                  <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.infoText, { color: colors.primary }]}>
+                    Inicio: {new Date(courseStartDate).toLocaleDateString('es-ES')}
+                  </Text>
+                </View>
+              )}
+              {courseEndDate && (
+                <View style={[styles.infoBadge, { backgroundColor: dark ? "#2C2C2E" : "#E8F0FE" }]}>
+                  <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.infoText, { color: colors.primary }]}>
+                    Fin: {new Date(courseEndDate).toLocaleDateString('es-ES')}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
 
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Descripción del curso</Text>
           <Text style={[styles.descriptionText, { color: colors.subtext }]}>

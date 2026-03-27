@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useRouter } from "expo-router"; // Corregido: useFocusEffect
-import { useCallback, useEffect, useState } from "react"; // Corregido: useCallback
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
   FlatList,
   Image,
   Modal,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -15,7 +16,7 @@ import {
 import SkeletonCourseCard from "../../components/SkeletonCourseCard";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
-import { getCursos } from "../../services/cursosServices";
+import { getCursos, getProvincias, getFamilias, getAreas } from "../../services/cursosServices";
 
 const CursosScreen = () => {
   const { user } = useAuth();
@@ -28,16 +29,21 @@ const CursosScreen = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedCity, setSelectedCity] = useState("");
-  const [selectedLevel, setSelectedLevel] = useState("");
+  
+  // Nuevos filtros (reemplazan a los antiguos)
+  const [provincias, setProvincias] = useState(['Todas']);
+  const [familias, setFamilias] = useState(['Todas']);
+  const [areas, setAreas] = useState(['Todas']);
+  const [selectedProvincia, setSelectedProvincia] = useState('');
+  const [selectedFamilia, setSelectedFamilia] = useState('');
+  const [selectedArea, setSelectedArea] = useState('');
   const [selectedDuration, setSelectedDuration] = useState("");
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
+  const [isDataReady, setIsDataReady] = useState(false);
+  
   const router = useRouter();
-
   const { colors, dark } = useTheme();
 
-  const cities = ["Todas", "Almería", "Madrid", "Barcelona"];
-  const levels = ["Todos", "Avanzado", "Intermedio", "Experto"];
   const durations = [
     { label: "Todas", value: "", min: 0, max: 999 },
     { label: "Corta (< 50h)", value: "short", min: 0, max: 50 },
@@ -51,7 +57,6 @@ const CursosScreen = () => {
     setIsRefreshing(false);
   };
 
-  // --- PUNTO 2: REFRESCAR AL GANAR EL FOCO ---
   useFocusEffect(
     useCallback(() => {
       if (user?.dni) {
@@ -68,19 +73,16 @@ const CursosScreen = () => {
       const profile = await getStudentProfile(user.dni);
 
       if (profile) {
-        // Obtenemos los IDs de las inscripciones del alumno (ej: ["C001", "C002"])
         const enrolledIds = (profile.enrollments || []).map((ins) =>
           String(ins.name),
         );
 
-        // 1. Sincronizamos la lista general: Marcamos isEnrolled si el ID está en la lista del alumno
         const updatedAll = cursosApp.map((c) => ({
           ...c,
           isEnrolled: enrolledIds.includes(String(c.id)),
         }));
         setAllCourses(updatedAll);
 
-        // 2. Sincronizamos "Mis Cursos": Filtramos los que están inscritos
         const enrolled = updatedAll.filter((c) => c.isEnrolled);
         setMyCourses(enrolled);
       }
@@ -91,6 +93,33 @@ const CursosScreen = () => {
     }
   };
 
+  // Cargar opciones dinámicas para filtros
+  useEffect(() => {
+    const cargarOpciones = async () => {
+      console.log("useEffect ejecutado, allCourses.length:", allCourses.length);
+      if (allCourses.length === 0) return;
+      
+      console.log("Cargando opciones de filtros desde cursos...");
+      
+      const provinciasUnicas = [...new Set(allCourses.map(c => c.provincia).filter(p => p && p !== 'Provincia no especificada'))];
+      setProvincias(['Todas', ...provinciasUnicas.sort()]);
+      
+      const familiasUnicas = [...new Set(allCourses.map(c => c.familiaFormativa).filter(f => f && f !== 'Familia no especificada'))];
+      setFamilias(['Todas', ...familiasUnicas.sort()]);
+      
+      const areasUnicas = [...new Set(allCourses.map(c => c.areaProfesional).filter(a => a && a !== 'Área no especificada'))];
+      setAreas(['Todas', ...areasUnicas.sort()]);
+      
+      setIsDataReady(true);
+      
+      console.log("Provincias:", provinciasUnicas);
+      console.log("Familias:", familiasUnicas);
+      console.log("Áreas:", areasUnicas);
+    };
+    
+    cargarOpciones();
+  }, [allCourses]);
+
   // --- LÓGICA DE FILTRADO ---
   useEffect(() => {
     let result = [];
@@ -98,53 +127,65 @@ const CursosScreen = () => {
     if (currentFilter === "enrolled") {
       result = myCourses;
     } else if (currentFilter === "available") {
-      // Filtrar los que NO están inscritos
       result = allCourses.filter((c) => !c.isEnrolled);
     } else {
       result = allCourses;
     }
 
+    // Búsqueda por texto
     if (searchQuery.trim() !== "") {
       const term = searchQuery.toLowerCase();
       result = result.filter(
         (course) =>
           course.name.toLowerCase().includes(term) ||
-          course.description.toLowerCase().includes(term),
+          course.description.toLowerCase().includes(term)
       );
     }
 
-    if (selectedCity && selectedCity !== "Todas") {
-      result = result.filter((course) => course.city === selectedCity);
+    // Filtrar por provincia
+    if (selectedProvincia && selectedProvincia !== "Todas") {
+      result = result.filter((course) => course.provincia === selectedProvincia);
     }
 
-    if (selectedLevel && selectedLevel !== "Todos") {
-      result = result.filter((course) => course.level === selectedLevel);
+    // Filtrar por familia formativa
+    if (selectedFamilia && selectedFamilia !== "Todas") {
+      result = result.filter((course) => course.familiaFormativa === selectedFamilia);
     }
 
+    // Filtrar por área profesional
+    if (selectedArea && selectedArea !== "Todas") {
+      result = result.filter((course) => course.areaProfesional === selectedArea);
+    }
+
+    // Filtrar por duración
     if (selectedDuration) {
       const durationRange = durations.find((d) => d.value === selectedDuration);
       if (durationRange) {
         result = result.filter(
           (course) =>
             course.durationHours >= durationRange.min &&
-            course.durationHours < durationRange.max,
+            course.durationHours < durationRange.max
         );
       }
     }
 
     setFilteredCourses(result);
-    setActiveFiltersCount(
-      (selectedCity && selectedCity !== "Todas" ? 1 : 0) +
-        (selectedLevel && selectedLevel !== "Todos" ? 1 : 0) +
-        (selectedDuration ? 1 : 0),
-    );
+    
+    const count = (selectedProvincia && selectedProvincia !== "Todas" ? 1 : 0) +
+                  (selectedFamilia && selectedFamilia !== "Todas" ? 1 : 0) +
+                  (selectedArea && selectedArea !== "Todas" ? 1 : 0) +
+                  (selectedDuration ? 1 : 0) +
+                  (searchQuery.trim() !== "" ? 1 : 0);
+    setActiveFiltersCount(count);
+    
   }, [
     currentFilter,
     searchQuery,
     allCourses,
     myCourses,
-    selectedCity,
-    selectedLevel,
+    selectedProvincia,
+    selectedFamilia,
+    selectedArea,
     selectedDuration,
   ]);
 
@@ -159,7 +200,7 @@ const CursosScreen = () => {
           style={[styles.description, { color: colors.subtext }]}
           numberOfLines={2}
         >
-          {item.description}
+          {item.description || `${item.familiaFormativa || ''} - ${item.areaProfesional || ''}`}
         </Text>
         <View style={styles.tagContainer}>
           <Text
@@ -171,7 +212,7 @@ const CursosScreen = () => {
               },
             ]}
           >
-            📍 {item.city || "Online"}
+            🏢 {item.centro?.length > 25 ? item.centro.substring(0, 22) + "..." : item.centro || "Centro no disponible"}
           </Text>
           <Text
             style={[
@@ -182,7 +223,7 @@ const CursosScreen = () => {
               },
             ]}
           >
-            ⏱️ {item.duration}
+            📍 {item.provincia || "Online"}
           </Text>
           <Text
             style={[
@@ -193,7 +234,18 @@ const CursosScreen = () => {
               },
             ]}
           >
-            📊 {item.level}
+            📚 {item.familiaFormativa?.length > 20 ? item.familiaFormativa.substring(0, 18) + "..." : item.familiaFormativa || "Familia"}
+          </Text>
+          <Text
+            style={[
+              styles.tag,
+              {
+                backgroundColor: dark ? "#3A3A3C" : "#F0F2F5",
+                color: colors.subtext,
+              },
+            ]}
+          >
+            📊 {item.areaProfesional?.length > 20 ? item.areaProfesional.substring(0, 18) + "..." : item.areaProfesional || "Área"}
           </Text>
         </View>
         <TouchableOpacity
@@ -211,6 +263,12 @@ const CursosScreen = () => {
                 courseDuration: item.duration,
                 courseLevel: item.level,
                 courseImage: item.image,
+                courseCenter: item.centro,
+                courseProvince: item.provincia,
+                courseFamily: item.familiaFormativa,
+                courseArea: item.areaProfesional,
+                courseStartDate: item.startDate,
+                courseEndDate: item.endDate,
                 isEnrolled: item.isEnrolled ? "true" : "false",
               },
             });
@@ -225,9 +283,11 @@ const CursosScreen = () => {
   );
 
   const aplicarFiltros = () => setShowFilters(false);
+  
   const limpiarFiltros = () => {
-    setSelectedCity("");
-    setSelectedLevel("");
+    setSelectedProvincia("");
+    setSelectedFamilia("");
+    setSelectedArea("");
     setSelectedDuration("");
     setSearchQuery("");
     setShowFilters(false);
@@ -389,82 +449,129 @@ const CursosScreen = () => {
           />
         }
       />
-      <Modal visible={showFilters} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>
+      <Modal visible={showFilters} animationType="slide" transparent={false}>
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          {/* Cabecera fija */}
+          <View style={[styles.modalHeaderFixed, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.modalTitleFixed, { color: colors.text }]}>
               Filtros avanzados
             </Text>
-            <Text style={[styles.filterLabel, { color: colors.text }]}>
-              Ciudad
+            <TouchableOpacity 
+              onPress={() => setShowFilters(false)}
+              style={styles.modalCloseButtonFixed}
+            >
+              <Ionicons name="close" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+          
+          {/* Área de contenido desplazable */}
+          <ScrollView 
+            showsVerticalScrollIndicator={true}
+            contentContainerStyle={styles.modalScrollContentFixed}
+            style={{ flex: 1 }}
+          >
+            {/* Provincia */}
+            <Text style={[styles.filterLabelFixed, { color: colors.text }]}>
+              Provincia
             </Text>
-            <View style={styles.filterOptions}>
-              {cities.map((city) => (
+            <View style={styles.filterOptionsFixed}>
+              {provincias && provincias.map((provincia) => (
                 <TouchableOpacity
-                  key={city}
+                  key={provincia}
                   style={[
-                    styles.filterChip,
-                    { backgroundColor: dark ? "#3A3A3C" : "#F0F2F5" },
-                    selectedCity === city && styles.filterChipActive,
+                    styles.filterChipFixed,
+                    { backgroundColor: dark ? "#2C2C2E" : "#F0F2F5" },
+                    selectedProvincia === provincia && styles.filterChipActiveFixed,
                   ]}
                   onPress={() =>
-                    setSelectedCity(selectedCity === city ? "" : city)
+                    setSelectedProvincia(selectedProvincia === provincia ? "" : provincia)
                   }
                 >
                   <Text
                     style={[
-                      styles.filterChipText,
+                      styles.filterChipTextFixed,
                       { color: colors.subtext },
-                      selectedCity === city && styles.filterChipTextActive,
+                      selectedProvincia === provincia && styles.filterChipTextActiveFixed,
                     ]}
                   >
-                    {city}
+                    {provincia}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={[styles.filterLabel, { color: colors.text }]}>
-              Nivel
+            {/* Familia Formativa */}
+            <Text style={[styles.filterLabelFixed, { color: colors.text }]}>
+              Familia Formativa
             </Text>
-            <View style={styles.filterOptions}>
-              {levels.map((level) => (
+            <View style={styles.filterOptionsFixed}>
+              {familias && familias.map((familia) => (
                 <TouchableOpacity
-                  key={level}
+                  key={familia}
                   style={[
-                    styles.filterChip,
-                    { backgroundColor: dark ? "#3A3A3C" : "#F0F2F5" },
-                    selectedLevel === level && styles.filterChipActive,
+                    styles.filterChipFixed,
+                    { backgroundColor: dark ? "#2C2C2E" : "#F0F2F5" },
+                    selectedFamilia === familia && styles.filterChipActiveFixed,
                   ]}
                   onPress={() =>
-                    setSelectedLevel(selectedLevel === level ? "" : level)
+                    setSelectedFamilia(selectedFamilia === familia ? "" : familia)
                   }
                 >
                   <Text
                     style={[
-                      styles.filterChipText,
+                      styles.filterChipTextFixed,
                       { color: colors.subtext },
-                      selectedLevel === level && styles.filterChipTextActive,
+                      selectedFamilia === familia && styles.filterChipTextActiveFixed,
                     ]}
                   >
-                    {level}
+                    {familia}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={[styles.filterLabel, { color: colors.text }]}>
+            {/* Área Profesional */}
+            <Text style={[styles.filterLabelFixed, { color: colors.text }]}>
+              Área Profesional
+            </Text>
+            <View style={styles.filterOptionsFixed}>
+              {areas && areas.map((area) => (
+                <TouchableOpacity
+                  key={area}
+                  style={[
+                    styles.filterChipFixed,
+                    { backgroundColor: dark ? "#2C2C2E" : "#F0F2F5" },
+                    selectedArea === area && styles.filterChipActiveFixed,
+                  ]}
+                  onPress={() =>
+                    setSelectedArea(selectedArea === area ? "" : area)
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.filterChipTextFixed,
+                      { color: colors.subtext },
+                      selectedArea === area && styles.filterChipTextActiveFixed,
+                    ]}
+                  >
+                    {area}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Duración */}
+            <Text style={[styles.filterLabelFixed, { color: colors.text }]}>
               Duración
             </Text>
-            <View style={styles.filterOptions}>
+            <View style={styles.filterOptionsFixed}>
               {durations.map((duration) => (
                 <TouchableOpacity
                   key={duration.label}
                   style={[
-                    styles.filterChip,
-                    { backgroundColor: dark ? "#3A3A3C" : "#F0F2F5" },
-                    selectedDuration === duration.value &&
-                      styles.filterChipActive,
+                    styles.filterChipFixed,
+                    { backgroundColor: dark ? "#2C2C2E" : "#F0F2F5" },
+                    selectedDuration === duration.value && styles.filterChipActiveFixed,
                   ]}
                   onPress={() =>
                     setSelectedDuration(
@@ -474,10 +581,9 @@ const CursosScreen = () => {
                 >
                   <Text
                     style={[
-                      styles.filterChipText,
+                      styles.filterChipTextFixed,
                       { color: colors.subtext },
-                      selectedDuration === duration.value &&
-                        styles.filterChipTextActive,
+                      selectedDuration === duration.value && styles.filterChipTextActiveFixed,
                     ]}
                   >
                     {duration.label}
@@ -485,30 +591,27 @@ const CursosScreen = () => {
                 </TouchableOpacity>
               ))}
             </View>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.clearButton,
-                  { backgroundColor: dark ? "#3A3A3C" : "#F0F2F5" },
-                ]}
-                onPress={limpiarFiltros}
-              >
-                <Text
-                  style={[styles.clearButtonText, { color: colors.subtext }]}
-                >
-                  Limpiar todo
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.applyButton,
-                  { backgroundColor: colors.primary },
-                ]}
-                onPress={aplicarFiltros}
-              >
-                <Text style={styles.applyButtonText}>Aplicar</Text>
-              </TouchableOpacity>
-            </View>
+            
+            {/* Espacio extra para que los botones no queden pegados */}
+            <View style={{ height: 20 }} />
+          </ScrollView>
+          
+          {/* Botones fijos en la parte inferior */}
+          <View style={[styles.modalButtonsFixed, { borderTopColor: colors.border, backgroundColor: colors.card }]}>
+            <TouchableOpacity
+              style={[styles.clearButtonFixed, { backgroundColor: dark ? "#3A3A3C" : "#F0F2F5" }]}
+              onPress={limpiarFiltros}
+            >
+              <Text style={[styles.clearButtonTextFixed, { color: colors.subtext }]}>
+                Limpiar todo
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.applyButtonFixed, { backgroundColor: colors.primary }]}
+              onPress={aplicarFiltros}
+            >
+              <Text style={styles.applyButtonTextFixed}>Aplicar</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -610,82 +713,6 @@ const styles = StyleSheet.create({
   buttonText: { color: "white", fontWeight: "bold" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   emptyText: { textAlign: "center", marginTop: 50, color: "#999" },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "white",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: "80%",
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  filterLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginTop: 15,
-    marginBottom: 10,
-    color: "#333",
-  },
-  filterOptions: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  filterChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#F0F2F5",
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-  },
-  filterChipActive: {
-    backgroundColor: "#2469F5",
-    borderColor: "#2469F5",
-  },
-  filterChipText: {
-    fontSize: 14,
-    color: "#666",
-  },
-  filterChipTextActive: {
-    color: "white",
-  },
-  modalButtons: {
-    flexDirection: "row",
-    marginTop: 30,
-    gap: 10,
-  },
-  clearButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: "#F0F2F5",
-    alignItems: "center",
-  },
-  clearButtonText: {
-    color: "#666",
-    fontWeight: "600",
-  },
-  applyButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: "#2469F5",
-    alignItems: "center",
-  },
-  applyButtonText: {
-    color: "white",
-    fontWeight: "600",
-  },
   searchSkeleton: {
     flex: 1,
     height: 45,
@@ -709,6 +736,85 @@ const styles = StyleSheet.create({
     backgroundColor: "#E0E0E0",
     borderRadius: 20,
     marginHorizontal: 5,
+  },
+
+  // ========== ESTILOS DEL MODAL DE FILTROS ==========
+  modalHeaderFixed: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  modalTitleFixed: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  modalCloseButtonFixed: {
+    padding: 8,
+    marginRight: -8,
+  },
+  modalScrollContentFixed: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  filterLabelFixed: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  filterOptionsFixed: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 8,
+  },
+  filterChipFixed: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  filterChipActiveFixed: {
+    backgroundColor: "#2469F5",
+    borderColor: "#2469F5",
+  },
+  filterChipTextFixed: {
+    fontSize: 14,
+  },
+  filterChipTextActiveFixed: {
+    color: "white",
+  },
+  modalButtonsFixed: {
+    flexDirection: "row",
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+  },
+  clearButtonFixed: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  clearButtonTextFixed: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  applyButtonFixed: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  applyButtonTextFixed: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
 
