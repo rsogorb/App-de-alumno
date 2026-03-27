@@ -116,6 +116,18 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleCancel = () => {
+    setFormData({
+      telefono: student.telefono,
+      genero: student.genero,
+      nacionalidad: student.nacionalidad,
+      fechaNacimiento: student.fechaNacimiento,
+      correoElectronico: student.correoElectronico,
+    });
+    setIsEditing(false);
+    setTempPhoto(null);
+  };
+
   if (isLoading) return <SkeletonProfile />;
 
   return (
@@ -181,24 +193,43 @@ export default function ProfileScreen() {
           <Text style={[styles.idSubtext, { color: colors.subtext }]}>
             DNI: {student?.dni}
           </Text>
-          <TouchableOpacity
-            style={[
-              styles.editBtn,
-              { backgroundColor: dark ? "#3A3A3C" : "#F2F2F7" },
-              isEditing && styles.saveBtn,
-            ]}
-            onPress={isEditing ? handleSave : () => setIsEditing(true)}
-          >
-            <Text
-              style={[
-                styles.editBtnText,
-                { color: colors.primary },
-                isEditing && { color: "#FFF" },
-              ]}
-            >
-              {isEditing ? "✓ Guardar Cambios" : "✎ Editar Perfil"}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.actionButtonsContainer}>
+            {!isEditing ? (
+              <TouchableOpacity
+                style={[
+                  styles.editBtn,
+                  { backgroundColor: dark ? "#3A3A3C" : "#F2F2F7" },
+                ]}
+                onPress={() => setIsEditing(true)}
+              >
+                <Text style={[styles.editBtnText, { color: colors.primary }]}>
+                  ✎ Editar Perfil
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                {/* BOTÓN CANCELAR */}
+                <TouchableOpacity
+                  style={[styles.editBtn, { backgroundColor: "#FF3B3020" }]}
+                  onPress={handleCancel}
+                >
+                  <Text style={[styles.editBtnText, { color: "#FF3B30" }]}>
+                    ✕ Cancelar
+                  </Text>
+                </TouchableOpacity>
+
+                {/* BOTÓN GUARDAR */}
+                <TouchableOpacity
+                  style={[styles.editBtn, { backgroundColor: "#34C759" }]}
+                  onPress={handleSave}
+                >
+                  <Text style={[styles.editBtnText, { color: "#FFF" }]}>
+                    ✓ Guardar
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         </View>
 
         <Text style={[styles.sectionTitle, { color: colors.subtext }]}>
@@ -233,6 +264,7 @@ export default function ProfileScreen() {
             }
             icon="✉️"
             colors={colors}
+            keyboardType="email-adress"
           />
           <EditableRow
             label="Teléfono"
@@ -242,6 +274,7 @@ export default function ProfileScreen() {
             icon="📱"
             colors={colors}
             last
+            keyboardType="phone-pad"
           />
         </View>
 
@@ -251,12 +284,14 @@ export default function ProfileScreen() {
         <View style={[styles.card, { backgroundColor: colors.card }]}>
           {student?.enrollments && student.enrollments.length > 0 ? (
             student.enrollments.map((enrollment, index) => {
+              // Intentamos buscar en mocks, si no, usamos los datos de la API
               const cursoInfo = mockCourses.find(
-                (c) => String(c.id) === String(enrollment.name),
+                (c) => String(c.id) === String(enrollment.course),
               );
+
               return (
                 <TouchableOpacity
-                  key={enrollment.name + index}
+                  key={index}
                   style={[
                     styles.courseRow,
                     { borderBottomColor: colors.border },
@@ -265,18 +300,11 @@ export default function ProfileScreen() {
                     },
                   ]}
                   onPress={() =>
-                    cursoInfo &&
                     router.push({
                       pathname: "/course-detail",
                       params: {
-                        courseId: cursoInfo.id,
-                        courseName: cursoInfo.name || cursoInfo.titulo, // Usa el nombre que tengan tus mocks
-                        courseDescription:
-                          cursoInfo.description || cursoInfo.descripcion,
-                        courseDuration:
-                          cursoInfo.duration || cursoInfo.duracion,
-                        courseLevel: cursoInfo.level || cursoInfo.nivel,
-                        courseImage: cursoInfo.image || cursoInfo.imagen,
+                        courseId: enrollment.course,
+                        courseName: enrollment.course_name || enrollment.course,
                         isEnrolled: "true",
                       },
                     })
@@ -288,16 +316,21 @@ export default function ProfileScreen() {
                       { backgroundColor: dark ? "#3A3A3C" : "#F0F2F5" },
                     ]}
                   >
-                    <Text>{cursoInfo ? "📘" : "📙"}</Text>
+                    <Text>
+                      {enrollment.estado === "Finalizado" ? "✅" : "📘"}
+                    </Text>
                   </View>
                   <View style={styles.courseInfo}>
-                    <Text style={[styles.courseName, { color: colors.text }]}>
-                      {enrollment.course_name}
+                    <Text
+                      style={[styles.courseName, { color: colors.text }]}
+                      numberOfLines={1}
+                    >
+                      {enrollment.course_name || enrollment.course}
                     </Text>
                     <Text
-                      style={[styles.courseStatus, { color: colors.subtext }]}
+                      style={[styles.courseStatus, { color: colors.primary }]}
                     >
-                      {enrollment.status || "En curso"}
+                      {enrollment.estado || "En curso"}
                     </Text>
                   </View>
                   <Text style={[styles.courseArrow, { color: colors.subtext }]}>
@@ -311,7 +344,7 @@ export default function ProfileScreen() {
               <Text
                 style={[styles.emptyCoursesText, { color: colors.subtext }]}
               >
-                No estás inscrito en ningún curso.
+                No tienes cursos registrados.
               </Text>
             </View>
           )}
@@ -440,9 +473,18 @@ const styles = StyleSheet.create({
   },
   nameText: { fontSize: 20, fontWeight: "bold", marginTop: 12 },
   idSubtext: { fontSize: 13, marginBottom: 15 },
-  editBtn: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20 },
+  editBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
+    minWidth: 120, // Para que los botones tengan un tamaño consistente
+    alignItems: "center",
+  },
   saveBtn: { backgroundColor: "#34C759" },
-  editBtnText: { fontSize: 14, fontWeight: "600" },
+  editBtnText: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
   sectionTitle: {
     fontSize: 11,
     marginLeft: 20,
@@ -472,6 +514,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
+  },
+  actionButtonsContainer: {
+    flexDirection: "row",
+    marginTop: 15,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
   },
   courseIcon: {
     width: 40,

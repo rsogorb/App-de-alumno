@@ -1,7 +1,14 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { PropsWithChildren, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-// 1. Importamos tu contexto (ajusta la ruta si es necesario)
+import {
+  LayoutAnimation,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  UIManager,
+  View,
+} from "react-native";
 import { useTheme } from "../context/ThemeContext";
 
 export function Collapsible({
@@ -10,27 +17,32 @@ export function Collapsible({
 }: PropsWithChildren & { title: string }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // 2. Usamos tus colores globales
   const { colors, dark } = useTheme();
 
+  if (
+    Platform.OS === "android" &&
+    UIManager.setLayoutAnimationEnabledExperimental
+  ) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+
   return (
-    // 3. Cambiamos ThemedView por View con tu color de fondo
     <View style={{ backgroundColor: "transparent" }}>
       <TouchableOpacity
         style={styles.heading}
-        onPress={() => setIsOpen((value) => !value)}
-        activeOpacity={0.8}
+        onPress={() => {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          setIsOpen(!isOpen);
+        }}
       >
         <IconSymbol
           name="chevron.right"
           size={18}
           weight="medium"
-          // 4. El icono ahora usa tu color primario o el de texto
           color={colors.primary}
           style={{ transform: [{ rotate: isOpen ? "90deg" : "0deg" }] }}
         />
 
-        {/* 5. El texto ahora usa tu color de texto global */}
         <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
       </TouchableOpacity>
 

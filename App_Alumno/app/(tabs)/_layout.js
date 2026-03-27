@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { View, Text } from "react-native";
+import { Text, View } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { getAvisos } from "../../services/avisoService";
 
@@ -12,7 +12,7 @@ export default function TabsLayout() {
   useEffect(() => {
     const cargarContador = async () => {
       const avisos = await getAvisos();
-      const noLeidos = avisos.filter(a => !a.leido).length;
+      const noLeidos = avisos.filter((a) => !a.leido).length;
       setAvisosNoLeidos(noLeidos);
     };
     cargarContador();
