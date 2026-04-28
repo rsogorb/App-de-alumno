@@ -42,6 +42,7 @@ export default function HomeScreen() {
       color: "#007AFF",
       route: "/(tabs)/profile",
     },
+    /*
     {
       id: 2,
       title: "Horario",
@@ -49,6 +50,8 @@ export default function HomeScreen() {
       color: "#5856D6",
       route: "/schedule",
     },
+    */
+    /*
     {
       id: 3,
       title: "Notas",
@@ -56,6 +59,8 @@ export default function HomeScreen() {
       color: "#FF9500",
       route: "/grades",
     },
+    */
+    /*
     {
       id: 4,
       title: "Asistencia",
@@ -63,6 +68,7 @@ export default function HomeScreen() {
       color: "#34C759",
       route: "/attendance",
     },
+    */
     {
       id: 5,
       title: "Avisos",
